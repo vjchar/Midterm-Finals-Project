@@ -1,0 +1,64 @@
+/*
+ * Uniform vehicle artwork system
+ * --------------------------------
+ * Every catalog image uses the same 16:9 transparent canvas. A conservative,
+ * shared scale keeps the complete vehicle visible and centered without
+ * stretching, cropping, or altering the original PNG files.
+ */
+
+.vehicle-image-wrap,
+.vehicle-card--compact .vehicle-image-wrap {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  aspect-ratio: 1.72 / 1;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 8px 10px 4px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-content: center;
+  place-items: center;
+}
+
+.vehicle-image-wrap img,
+.vehicle-card--compact .vehicle-image-wrap img {
+  --vehicle-artwork-scale: 1.08;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: auto;
+  object-fit: contain;
+  object-position: 50% 50%;
+  place-self: center;
+  transform: scale(var(--vehicle-artwork-scale));
+  transform-origin: 50% 50%;
+  transition: transform 220ms ease;
+}
+
+.vehicle-card:hover .vehicle-image-wrap img,
+.vehicle-card--compact:hover .vehicle-image-wrap img {
+  transform: scale(var(--vehicle-artwork-scale));
+}
+
+@media (max-width: 767.98px) {
+  .vehicle-image-wrap,
+.vehicle-card--compact .vehicle-image-wrap {
+    min-height: 188px;
+    padding-inline: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-image-wrap img,
+.vehicle-card:hover .vehicle-image-wrap img,
+.vehicle-card--compact .vehicle-image-wrap img,
+.vehicle-card--compact:hover .vehicle-image-wrap img {
+    transition: none;
+    transform: scale(var(--vehicle-artwork-scale));
+  }
+}
