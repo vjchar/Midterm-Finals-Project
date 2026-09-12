@@ -1,0 +1,225 @@
+"use strict";
+
+document.documentElement.classList.add("js-enabled");
+
+document.addEventListener("DOMContentLoaded", function () {
+    function setNavigationState(control, isExpanded) {
+        control.checked = isExpanded;
+        control.setAttribute("aria-expanded", String(isExpanded));
+
+        const controlledMenuId = control.getAttribute("aria-controls");
+        const controlledMenu = controlledMenuId
+            ? document.getElementById(controlledMenuId)
+            : null;
+
+        if (controlledMenu) {
+            controlledMenu.setAttribute("aria-hidden", String(!isExpanded));
+        }
+    }
+
+    function initializeNavigation(controlId, desktopBreakpoint) {
+        const navigationControl = document.getElementById(controlId);
+
+        if (!navigationControl) {
+            return;
+        }
+
+        function isDesktopLayout() {
+            return window.matchMedia(
+                "(min-width: " + desktopBreakpoint + "px)",
+            ).matches;
+        }
+
+        function synchronizeNavigationState() {
+            if (isDesktopLayout()) {
+                navigationControl.checked = false;
+                navigationControl.setAttribute("aria-expanded", "false");
+
+                const menuId = navigationControl.getAttribute("aria-controls");
+                const menu = menuId ? document.getElementById(menuId) : null;
+
+                if (menu) {
+                    menu.removeAttribute("aria-hidden");
+                }
+
+                return;
+            }
+
+            setNavigationState(navigationControl, navigationControl.checked);
+        }
+
+        navigationControl.addEventListener("change", function () {
+            setNavigationState(navigationControl, navigationControl.checked);
+        });
+
+        const menuId = navigationControl.getAttribute("aria-controls");
+        const navigationMenu = menuId ? document.getElementById(menuId) : null;
+
+        if (navigationMenu) {
+            navigationMenu.addEventListener("click", function (event) {
+                if (
+                    !isDesktopLayout() &&
+                    event.target.closest("a, button")
+                ) {
+                    setNavigationState(navigationControl, false);
+                }
+            });
+        }
+
+        window.addEventListener("resize", synchronizeNavigationState);
+        synchronizeNavigationState();
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && navigationControl.checked) {
+                setNavigationState(navigationControl, false);
+                navigationControl.focus();
+            }
+        });
+    }
+
+    initializeNavigation("siteMenuControl", 992);
+
+    const siteHeader = document.getElementById("siteHeader");
+
+    if (siteHeader) {
+        function updateHeaderSize() {
+            siteHeader.classList.toggle("is-compact", window.scrollY > 24);
+        }
+
+        window.addEventListener("scroll", updateHeaderSize, { passive: true });
+        updateHeaderSize();
+    }
+
+    document.querySelectorAll("form").forEach(function (formElement) {
+        formElement.addEventListener("submit", function (event) {
+            const submitButton = event.submitter;
+            const confirmationMessage = formElement.dataset.confirm;
+
+            if (
+                confirmationMessage &&
+                !window.confirm(confirmationMessage)
+            ) {
+                event.preventDefault();
+                return;
+            }
+
+            const skipsValidation = Boolean(
+                submitButton && submitButton.formNoValidate,
+            );
+
+            if (!skipsValidation && !formElement.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                formElement.classList.add("was-validated");
+
+                const firstInvalidControl = formElement.querySelector(
+                    ":invalid",
+                );
+
+                if (firstInvalidControl) {
+                    firstInvalidControl.focus();
+                }
+
+                return;
+            }
+
+            if (!submitButton || event.defaultPrevented) {
+                return;
+            }
+
+            window.setTimeout(function () {
+                if (event.defaultPrevented) {
+                    return;
+                }
+
+                submitButton.classList.add("is-loading");
+                submitButton.setAttribute("aria-busy", "true");
+
+                if (!submitButton.dataset.originalLabel) {
+                    submitButton.dataset.originalLabel =
+                        submitButton.innerHTML;
+                }
+            }, 0);
+        });
+    });
+
+    document.querySelectorAll("textarea[maxlength]").forEach(function (field) {
+        const characterCounter = document.createElement("small");
+        characterCounter.className = "character-counter";
+        characterCounter.setAttribute("aria-live", "polite");
+
+        function updateCharacterCount() {
+            characterCounter.textContent =
+                field.value.length + " / " + field.maxLength + " characters";
+        }
+
+        field.insertAdjacentElement("afterend", characterCounter);
+        field.addEventListener("input", updateCharacterCount);
+        updateCharacterCount();
+    });
+
+    document.querySelectorAll("form").forEach(function (formElement) {
+        const pickupDateInput = formElement.querySelector(
+            'input[name="pickup"][type="date"]',
+        );
+        const returnDateInput = formElement.querySelector(
+            'input[name="return"][type="date"]',
+        );
+
+        if (!pickupDateInput || !returnDateInput) {
+            return;
+        }
+
+        function synchronizeDateRange() {
+            if (pickupDateInput.value) {
+                returnDateInput.min = pickupDateInput.value;
+            }
+
+            if (
+                returnDateInput.value &&
+                pickupDateInput.value &&
+                returnDateInput.value < pickupDateInput.value
+            ) {
+                returnDateInput.value = pickupDateInput.value;
+            }
+        }
+
+        pickupDateInput.addEventListener("change", synchronizeDateRange);
+        synchronizeDateRange();
+    });
+
+    const fallbackVehicleImage =
+        "assets/images/placeholders/vehicle-placeholder.svg";
+
+    document
+        .querySelectorAll(
+            ".vehicle-image-wrap img, " +
+                ".compare-table img",
+        )
+        .forEach(function (imageElement) {
+        imageElement.addEventListener("error", function () {
+            if (imageElement.dataset.fallbackApplied === "true") {
+                return;
+            }
+
+            imageElement.dataset.fallbackApplied = "true";
+            imageElement.src = fallbackVehicleImage;
+            imageElement.classList.add("is-placeholder");
+        });
+    });
+
+    document.querySelectorAll(".flash-stack .alert").forEach(function (alert) {
+        alert.classList.add("alert-dismissible", "fade", "show");
+
+        if (alert.querySelector(".btn-close")) {
+            return;
+        }
+
+        const dismissButton = document.createElement("button");
+        dismissButton.type = "button";
+        dismissButton.className = "btn-close";
+        dismissButton.setAttribute("data-bs-dismiss", "alert");
+        dismissButton.setAttribute("aria-label", "Close message");
+        alert.appendChild(dismissButton);
+    });
+});
