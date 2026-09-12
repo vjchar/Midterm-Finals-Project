@@ -1,0 +1,36 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?:includes|database|storage|\.git)(?:/|$) - [F,L,NC]
+
+    # Keep the original public URLs while the implementation files stay
+    # organized by responsibility.
+    RewriteRule ^(about|contact|services)\.php$ pages/company/$1.php [L,QSA,NC]
+    RewriteRule ^vehicles\.php$ pages/fleet/vehicles.php [L,QSA,NC]
+    RewriteRule ^vehicle-details\.php$ pages/fleet/vehicle-details.php [L,QSA,NC]
+    RewriteRule ^(vehicle-management|booking-management|payment-management)\.php$ pages/management/$1.php [L,QSA,NC]
+    RewriteRule ^(booking|booking-confirmation|booking-view)\.php$ pages/booking/$1.php [L,QSA,NC]
+    RewriteRule ^(my-bookings|payments)\.php$ pages/account/$1.php [L,QSA,NC]
+    RewriteRule ^invoice\.php$ pages/payment/invoice.php [L,QSA,NC]
+    RewriteRule ^(availability|booking-estimate|secure-file)\.php$ actions/$1.php [L,QSA,NC]
+    RewriteRule ^(login|register|logout)\.php$ pages/auth/$1.php [L,QSA,NC]
+    RewriteRule ^(403|404|500)\.php$ errors/$1.php [L,QSA,NC]
+</IfModule>
+
+<FilesMatch "(?i)^(?:\.|README(?:$|[._-])|RUBRIC(?:$|[._-])|tailwind\.config\.js$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
