@@ -1,0 +1,401 @@
+<?php
+
+declare(strict_types=1);
+
+require dirname(__DIR__, 2) . "/includes/bootstrap.php";
+
+$authenticatedUser = require_customer();
+$userBookings = bookings_for_user((int) $authenticatedUser["id"]);
+$eligibleBookings = array_values(
+    array_filter(
+        $userBookings,
+        static fn(array $userBooking): bool => !in_array(
+            $userBooking["status"],
+            ["cancelled", "rejected", "no_show"],
+            true,
+        ),
+    ),
+);
+
+$selectedBookingReference = trim(
+    (string) ($_GET["reference"] ??
+        ($_POST["reference"] ?? ($eligibleBookings[0]["reference"] ?? ""))),
+);
+$selectedBooking =
+    $selectedBookingReference !== ""
+        ? booking_find_by_reference($selectedBookingReference)
+        : null;
+
+if (
+    $selectedBooking &&
+    (int) $selectedBooking["user_id"] !== (int) $authenticatedUser["id"]
+) {
+    $selectedBooking = null;
+}
+
+$paymentValidationErrors = [];
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && $selectedBooking) {
+    $uploadedProofFilename = "";
+
+    try {
+        require_csrf();
+
+        if (
+            isset($_FILES["payment_proof"]) &&
+            ($_FILES["payment_proof"]["error"] ?? UPLOAD_ERR_NO_FILE) !==
+                UPLOAD_ERR_NO_FILE
+        ) {
+            $uploadedProofFilename = upload_file(
+                $_FILES["payment_proof"],
+                ROOT .
+                    DIRECTORY_SEPARATOR .
+                    "storage" .
+                    DIRECTORY_SEPARATOR .
+                    "payment-proofs",
+                [
+                    "image/jpeg" => "jpg",
+                    "image/png" => "png",
+                    "application/pdf" => "pdf",
+                ],
+                5 * 1024 * 1024,
+                "payment-" . $selectedBooking["reference"],
+            );
+        }
+
+        $submittedAmount = filter_var(
+            $_POST["amount"] ?? null,
+            FILTER_VALIDATE_INT,
+        );
+        if ($submittedAmount === false) {
+            throw new InvalidArgumentException(
+                "Enter a valid whole-peso amount.",
+            );
+        }
+
+        create_payment_request(
+            $selectedBooking,
+            (int) $authenticatedUser["id"],
+            post_string("payment_type"),
+            post_string("method"),
+            (int) $submittedAmount,
+            post_string("transaction_reference"),
+            $uploadedProofFilename,
+        );
+        flash(
+            "success",
+            "Payment submitted for administrator verification.",
+        );
+        redirect(
+            "payments.php?reference=" .
+                urlencode((string) $selectedBooking["reference"]),
+        );
+    } catch (Throwable $exception) {
+        if ($uploadedProofFilename !== "") {
+            $uploadedProofPath =
+                ROOT .
+                DIRECTORY_SEPARATOR .
+                "storage" .
+                DIRECTORY_SEPARATOR .
+                "payment-proofs" .
+                DIRECTORY_SEPARATOR .
+                basename($uploadedProofFilename);
+            if (is_file($uploadedProofPath)) {
+                unlink($uploadedProofPath);
+            }
+        }
+
+        $paymentValidationErrors[] = user_facing_error_message($exception);
+    }
+}
+
+$paymentSummary = $selectedBooking
+    ? booking_payment_summary($selectedBooking)
+    : null;
+$pageTitle = "Payments | VJ Car Rental";
+
+require dirname(__DIR__, 2) . "/includes/header.php";
+?>
+<section class="page-hero page-hero--compact pattern-layer">
+    <div class="container">
+        <span class="section-kicker">Transparent payment tracking</span>
+        <h1>Booking payments</h1>
+        <p>
+            Submit a payment reference or proof, then track administrator
+            verification. This school build records payments but does not charge
+            cards online.
+        </p>
+    </div>
+</section>
+
+<section class="content-section operations-page">
+    <div class="container">
+        <?php foreach ($paymentValidationErrors as $validationError): ?>
+            <div class="alert alert-danger" role="alert">
+                <?= escape_html($validationError) ?>
+            </div>
+        <?php endforeach; ?>
+
+        <?php if (!$eligibleBookings): ?>
+            <div class="empty-state">
+                <i class="bi bi-receipt"></i>
+                <h2>No payable bookings</h2>
+                <p>Create a booking before submitting a deposit or rental payment.</p>
+                <a class="btn btn-primary" href="booking.php">Book a Vehicle</a>
+            </div>
+        <?php else: ?>
+            <form class="booking-selector" method="get">
+                <label for="paymentBooking">Booking</label>
+                <select
+                    class="form-select"
+                    id="paymentBooking"
+                    name="reference"
+                    required
+                >
+                    <?php foreach ($eligibleBookings as $eligibleBooking): ?>
+                        <option
+                            value="<?= escape_html($eligibleBooking["reference"]) ?>"
+                            <?= $selectedBooking &&
+                            $eligibleBooking["reference"] ===
+                                $selectedBooking["reference"]
+                                ? "selected"
+                                : "" ?>
+                        >
+                            <?= escape_html(
+                                $eligibleBooking["reference"] .
+                                    " — " .
+                                    $eligibleBooking["vehicle_name"],
+                            ) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button class="btn btn-outline" type="submit">
+                    Open booking
+                </button>
+            </form>
+
+            <?php if ($selectedBooking && $paymentSummary): ?>
+                <div class="payment-overview">
+                    <article>
+                        <span>Security deposit due</span>
+                        <strong><?= money((int) $paymentSummary["deposit_due"]) ?></strong>
+                    </article>
+                    <article>
+                        <span>Rental balance due</span>
+                        <strong><?= money((int) $paymentSummary["rental_due"]) ?></strong>
+                    </article>
+                    <article>
+                        <span>Extra charges due</span>
+                        <strong><?= money((int) $paymentSummary["extra_due"]) ?></strong>
+                    </article>
+                    <article>
+                        <span>Verified payments</span>
+                        <strong><?= money((int) $paymentSummary["paid_total"]) ?></strong>
+                    </article>
+                </div>
+
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-5">
+                        <article class="operation-card">
+                            <span class="section-kicker">Submit payment</span>
+                            <h2><?= escape_html($selectedBooking["reference"]) ?></h2>
+
+                            <?php if (
+                                (int) $paymentSummary["deposit_due"] +
+                                    (int) $paymentSummary["rental_due"] ===
+                                0
+                            ): ?>
+                                <div class="alert alert-success">
+                                    Deposit and rental total are fully verified.
+                                </div>
+                            <?php else: ?>
+                                <form
+                                    class="row g-3"
+                                    method="post"
+                                    enctype="multipart/form-data"
+                                >
+                                    <?= csrf_field() ?>
+                                    <input
+                                        type="hidden"
+                                        name="reference"
+                                        value="<?= escape_html($selectedBooking["reference"]) ?>"
+                                    >
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="paymentType">
+                                            Payment for
+                                        </label>
+                                        <select
+                                            class="form-select"
+                                            id="paymentType"
+                                            name="payment_type"
+                                            required
+                                        >
+                                            <option value="deposit">Security deposit</option>
+                                            <option value="balance">Rental balance</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="paymentMethod">
+                                            Method
+                                        </label>
+                                        <select
+                                            class="form-select"
+                                            id="paymentMethod"
+                                            name="method"
+                                            required
+                                        >
+                                            <option value="gcash">GCash</option>
+                                            <option value="bank_transfer">Bank transfer</option>
+                                            <option value="cash">Cash at branch</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label" for="paymentAmount">
+                                            Amount (PHP)
+                                        </label>
+                                        <input
+                                            class="form-control"
+                                            id="paymentAmount"
+                                            name="amount"
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label" for="transactionReference">
+                                            Transaction reference
+                                        </label>
+                                        <input
+                                            class="form-control"
+                                            id="transactionReference"
+                                            name="transaction_reference"
+                                            maxlength="120"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label" for="paymentProof">
+                                            Payment proof (optional JPG, PNG, or PDF)
+                                        </label>
+                                        <input
+                                            class="form-control"
+                                            id="paymentProof"
+                                            name="payment_proof"
+                                            type="file"
+                                            accept=".jpg,.jpeg,.png,.pdf"
+                                        >
+                                    </div>
+
+                                    <div class="col-12">
+                                        <button class="btn btn-primary" type="submit">
+                                            Submit Payment
+                                        </button>
+                                    </div>
+                                </form>
+                            <?php endif; ?>
+                        </article>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <article class="operation-card">
+                            <div class="operation-card__heading">
+                                <div>
+                                    <span class="section-kicker">Payment history</span>
+                                    <h2>Recorded transactions</h2>
+                                </div>
+                                <a
+                                    class="btn btn-outline btn-sm"
+                                    href="invoice.php?reference=<?= urlencode($selectedBooking["reference"]) ?>"
+                                >
+                                    <i class="bi bi-receipt"></i>
+                                    Invoice
+                                </a>
+                            </div>
+
+                            <?php if (!$paymentSummary["payments"]): ?>
+                                <p class="display-note">
+                                    No payment has been submitted for this booking.
+                                </p>
+                            <?php else: ?>
+                                <div class="admin-table-wrap">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Type</th>
+                                                <th>Method</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Proof</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($paymentSummary["payments"] as $paymentRecord): ?>
+                                                <tr>
+                                                    <td>
+                                                        <?= date(
+                                                            "M j, Y",
+                                                            strtotime($paymentRecord["created_at"]),
+                                                        ) ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= escape_html(
+                                                            ucwords(
+                                                                str_replace(
+                                                                    "_",
+                                                                    " ",
+                                                                    $paymentRecord["payment_type"],
+                                                                ),
+                                                            ),
+                                                        ) ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= escape_html(
+                                                            ucwords(
+                                                                str_replace(
+                                                                    "_",
+                                                                    " ",
+                                                                    $paymentRecord["method"],
+                                                                ),
+                                                            ),
+                                                        ) ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= money((int) $paymentRecord["amount"]) ?>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge status-badge--<?= status_class($paymentRecord["status"]) ?>">
+                                                            <?= escape_html(ucfirst($paymentRecord["status"])) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($paymentRecord["proof_filename"]): ?>
+                                                            <a href="secure-file.php?type=payment&amp;id=<?= (int) $paymentRecord["id"] ?>">
+                                                                View
+                                                            </a>
+                                                        <?php else: ?>
+                                                            —
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </article>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+</section>
+
+<?php require dirname(__DIR__, 2) . "/includes/footer.php"; ?>
