@@ -172,7 +172,7 @@ require dirname(__DIR__, 2) . '/includes/header.php';
         <article class="operation-card mt-4">
             <span class="section-kicker">History</span><h2>Booking modification requests</h2>
             <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Requested</th><th>Status</th><th>Price impact</th><th>Admin note</th></tr></thead><tbody>
-            <?php foreach ($history as $item): ?><tr><td><?= date('M j, Y g:i A', strtotime($item['requested_at'])) ?></td><td><span class="status-badge status-badge--<?= status_class($item['status']) ?>"><?= escape_html(ucfirst($item['status'])) ?></span></td><td><?= ((int) $item['price_difference'] >= 0 ? '+' : '−') . money(abs((int) $item['price_difference'])) ?></td><td><?= escape_html((string) ($item['admin_note'] ?: '—')) ?></td></tr><?php endforeach; ?>
+            <?php foreach ($history as $item): ?><tr><td><?= date('M j, Y g:i A', strtotime($item['requested_at'])) ?></td><td><span class="status-badge status-badge--<?= status_class($item['status']) ?>"><?= escape_html(humanize_label($item['status'])) ?></span></td><td><?= ((int) $item['price_difference'] >= 0 ? '+' : '−') . money(abs((int) $item['price_difference'])) ?></td><td><?= escape_html((string) ($item['admin_note'] ?: '—')) ?></td></tr><?php endforeach; ?>
             </tbody></table></div>
         </article>
     <?php endif; ?>

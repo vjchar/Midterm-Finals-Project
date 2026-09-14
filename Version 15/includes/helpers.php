@@ -128,6 +128,18 @@ function booking_reference(): string
     return "VJ-" . date("ymd") . "-" . strtoupper(bin2hex(random_bytes(3)));
 }
 
+function humanize_label(string $value): string
+{
+    $label = trim(str_replace(["_", "-"], " ", $value));
+    $label = preg_replace("/\s+/", " ", $label) ?? $label;
+    return ucwords($label);
+}
+
+function status_label(string $status): string
+{
+    return humanize_label($status);
+}
+
 function status_class(string $status): string
 {
     return match ($status) {

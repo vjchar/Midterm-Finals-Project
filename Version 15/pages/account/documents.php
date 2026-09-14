@@ -100,7 +100,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <div class="operation-card__heading">
                         <i class="bi <?= $icon ?>"></i>
                         <div><h2><?= escape_html($label) ?></h2><p><?= escape_html($description) ?></p></div>
-                        <span class="status-badge status-badge--<?= status_class($effectiveDocumentStatus) ?>"><?= escape_html(ucfirst($effectiveDocumentStatus)) ?></span>
+                        <span class="status-badge status-badge--<?= status_class($effectiveDocumentStatus) ?>"><?= escape_html(humanize_label($effectiveDocumentStatus)) ?></span>
                     </div>
                     <?php if ($document): ?>
                         <dl class="operation-meta">

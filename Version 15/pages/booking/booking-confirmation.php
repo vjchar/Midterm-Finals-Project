@@ -33,7 +33,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <div>
                 <small>Booking reference</small>
                 <h2><?= escape_html($booking["reference"]) ?></h2>
-                <p>Step 1 complete · Booking status: <?= escape_html(ucfirst($booking["status"])) ?></p>
+                <p>Step 1 complete · Booking status: <?= escape_html(humanize_label($booking["status"])) ?></p>
             </div>
         </div>
 

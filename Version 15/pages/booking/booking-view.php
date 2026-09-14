@@ -61,7 +61,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
         <div class="page-hero-meta">
             <span class="status-badge status-badge--<?= status_class(
                 $booking["status"],
-            ) ?>"><?= escape_html(ucfirst($booking["status"])) ?></span>
+            ) ?>"><?= escape_html(humanize_label($booking["status"])) ?></span>
             <span>
                 <i class="bi bi-calendar3"></i> Created <?= date(
                     "M j, Y",
@@ -226,7 +226,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                         <h2>Need to change or cancel before pickup?</h2>
                         <p>Booking changes use tracked requests instead of directly rewriting your reservation. Availability, maintenance, pricing, and any refund are recalculated securely and reviewed before your confirmed booking changes.</p>
                         <?php if ($unresolvedModification): ?>
-                            <div class="alert alert-info">A booking modification request is currently <strong><?= escape_html($unresolvedModification["status"]) ?></strong>.</div>
+                            <div class="alert alert-info">A booking modification request is currently <strong><?= escape_html(status_label((string) $unresolvedModification["status"])) ?></strong>.</div>
                         <?php endif; ?>
                         <?php if (($cancellationRequest["status"] ?? null) === "pending"): ?>
                             <div class="alert alert-warning">Your cancellation request is awaiting administrator review.</div>
@@ -247,7 +247,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                         <p>You may request an earlier return or ask to extend this active rental. Extensions are checked against future reservations, maintenance, pricing, and payment requirements before activation.</p>
                         <?php if ($unresolvedAdjustment): ?>
                             <div class="alert alert-warning">
-                                Your <?= escape_html(str_replace("_", " ", $unresolvedAdjustment["request_type"])) ?> request is currently <strong><?= escape_html($unresolvedAdjustment["status"]) ?></strong>.
+                                Your <?= escape_html(humanize_label((string) $unresolvedAdjustment["request_type"])) ?> request is currently <strong><?= escape_html(status_label((string) $unresolvedAdjustment["status"])) ?></strong>.
                             </div>
                         <?php endif; ?>
                         <div class="d-flex flex-wrap gap-2">
@@ -267,7 +267,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             <span class="section-kicker">Completed trip</span>
                             <h2>Share your experience</h2>
                             <?php if ($review): ?>
-                                <p>Your review is currently <strong><?= escape_html($review["status"]) ?></strong>.</p>
+                                <p>Your review is currently <strong><?= escape_html(status_label((string) $review["status"])) ?></strong>.</p>
                             <?php else: ?>
                                 <p>Your verified review helps future renters choose confidently.</p>
                                 <a class="btn btn-primary" href="rate-trip.php?reference=<?= urlencode($booking["reference"]) ?>">Rate This Trip</a>
@@ -279,7 +279,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <article class="booking-management-panel">
                         <span class="section-kicker">Pre-pickup changes</span>
                         <h2>Modification history</h2>
-                        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Requested</th><th>Status</th><th>Price impact</th></tr></thead><tbody><?php foreach ($modifications as $item): ?><tr><td><?= date("M j, Y g:i A", strtotime($item["requested_at"])) ?></td><td><span class="status-badge status-badge--<?= status_class($item["status"]) ?>"><?= escape_html(ucfirst($item["status"])) ?></span></td><td><?= ((int) $item["price_difference"] >= 0 ? "+" : "−") . money(abs((int) $item["price_difference"])) ?></td></tr><?php endforeach; ?></tbody></table></div>
+                        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Requested</th><th>Status</th><th>Price impact</th></tr></thead><tbody><?php foreach ($modifications as $item): ?><tr><td><?= date("M j, Y g:i A", strtotime($item["requested_at"])) ?></td><td><span class="status-badge status-badge--<?= status_class($item["status"]) ?>"><?= escape_html(humanize_label($item["status"])) ?></span></td><td><?= ((int) $item["price_difference"] >= 0 ? "+" : "−") . money(abs((int) $item["price_difference"])) ?></td></tr><?php endforeach; ?></tbody></table></div>
                     </article>
                 <?php endif; ?>
                 <?php if ($settlement): ?>
@@ -302,7 +302,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <article class="booking-management-panel" id="refunds">
                         <span class="section-kicker">Refunds & financial adjustments</span>
                         <h2>Refund transaction history</h2>
-                        <?php if (!$refunds): ?><p class="display-note">No refund transaction is recorded for this booking.</p><?php else: ?><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Processed</th><th>Reference</th></tr></thead><tbody><?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td><?= money((int) $refund["amount"]) ?></td><td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(ucfirst($refund["status"])) ?></span></td><td><?= $refund["processed_at"] ? date("M j, Y g:i A", strtotime($refund["processed_at"])) : "—" ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+                        <?php if (!$refunds): ?><p class="display-note">No refund transaction is recorded for this booking.</p><?php else: ?><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Processed</th><th>Reference</th></tr></thead><tbody><?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td><?= money((int) $refund["amount"]) ?></td><td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span></td><td><?= $refund["processed_at"] ? date("M j, Y g:i A", strtotime($refund["processed_at"])) : "—" ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
                     </article>
                 <?php endif; ?>
             </div>

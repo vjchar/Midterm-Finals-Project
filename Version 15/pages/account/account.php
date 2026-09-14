@@ -71,7 +71,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             <a class="booking-list-item" href="<?= escape_html($journey["target_url"]) ?>">
                                 <img src="assets/images/cars/<?= escape_html($booking["vehicle_image"]) ?>" alt="<?= escape_html($booking["vehicle_name"]) ?>">
                                 <span><small><?= escape_html($booking["reference"]) ?></small><strong><?= escape_html($booking["vehicle_name"]) ?></strong><em><?= date("M j, Y", strtotime($booking["pickup_at"])) ?> – <?= date("M j, Y", strtotime($booking["return_at"])) ?></em><em class="journey-inline-next">Next: <?= escape_html($journey["title"]) ?></em></span>
-                                <b class="status-badge status-badge--<?= status_class($booking["status"]) ?>"><?= escape_html(ucfirst($booking["status"])) ?></b><i class="bi bi-chevron-right"></i>
+                                <b class="status-badge status-badge--<?= status_class($booking["status"]) ?>"><?= escape_html(humanize_label($booking["status"])) ?></b><i class="bi bi-chevron-right"></i>
                             </a>
                         <?php endforeach; ?>
                     </div>

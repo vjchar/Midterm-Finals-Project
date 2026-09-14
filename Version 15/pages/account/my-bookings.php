@@ -28,14 +28,14 @@ require dirname(__DIR__, 2) . "/includes/header.php";
     <div class="container">
         <div class="booking-filter-tabs" role="navigation" aria-label="Booking status filters">
             <?php foreach ($allowedStatuses as $status): ?>
-                <a class="<?= $statusFilter === $status ? "active" : "" ?>" href="my-bookings.php?status=<?= urlencode($status) ?>"><?= escape_html(ucfirst($status)) ?></a>
+                <a class="<?= $statusFilter === $status ? "active" : "" ?>" href="my-bookings.php?status=<?= urlencode($status) ?>"><?= escape_html(humanize_label($status)) ?></a>
             <?php endforeach; ?>
         </div>
 
         <?php if (!$visibleBookings): ?>
             <div class="empty-state">
                 <i class="bi bi-calendar2-x"></i>
-                <h2>No <?= $statusFilter === "all" ? "" : escape_html($statusFilter) . " " ?>bookings found</h2>
+                <h2>No <?= $statusFilter === "all" ? "" : escape_html(status_label($statusFilter)) . " " ?>bookings found</h2>
                 <p>Your reservations will appear here after you complete a booking.</p>
                 <a class="btn btn-primary" href="vehicles.php">Browse Vehicles</a>
             </div>
@@ -53,7 +53,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                 <em><i class="bi bi-geo-alt"></i> <?= escape_html($booking["pickup_location"]) ?></em>
                             </span>
                             <b><?= money((int) $booking["total"]) ?><small>rental total</small></b>
-                            <strong class="status-badge status-badge--<?= status_class($booking["status"]) ?>"><?= escape_html(ucfirst($booking["status"])) ?></strong>
+                            <strong class="status-badge status-badge--<?= status_class($booking["status"]) ?>"><?= escape_html(humanize_label($booking["status"])) ?></strong>
                         </a>
                         <div class="booking-list-item__next">
                             <span><small>Next step</small><strong><?= escape_html($journey["title"]) ?></strong></span>

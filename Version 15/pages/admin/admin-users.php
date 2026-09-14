@@ -153,10 +153,10 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $user["status"],
                                 ) ?>"><?= escape_html(
-    ucfirst($user["status"]),
+    humanize_label($user["status"]),
 ) ?></span>
                                 <small><?= escape_html(
-                                    ucfirst($user["role"]),
+                                    humanize_label($user["role"]),
                                 ) ?></small>
                             </td>
                             <td>

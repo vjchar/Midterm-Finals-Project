@@ -119,7 +119,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                     class="<?= $status === $filter ? "active" : "" ?>"
                     href="admin-payments.php?status=<?= $filter ?>"
                 >
-                    <?= ucfirst($filter) ?>
+                    <?= humanize_label($filter) ?>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -195,7 +195,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $payment["status"],
                                 ) ?>">
-                                    <?= escape_html(ucfirst($payment["status"])) ?>
+                                    <?= escape_html(humanize_label($payment["status"])) ?>
                                 </span>
                                 <?php if ($payment["paid_at"]): ?>
                                     <small><?= date(
@@ -261,7 +261,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                 <label for="refundStatus">Refund status</label>
                 <select class="form-select" id="refundStatus" name="refund_status">
                     <option value="all">All</option>
-                    <?php foreach (refund_statuses() as $refundFilter): ?><option value="<?= escape_html($refundFilter) ?>" <?= $refundStatus === $refundFilter ? "selected" : "" ?>><?= escape_html(ucfirst($refundFilter)) ?></option><?php endforeach; ?>
+                    <?php foreach (refund_statuses() as $refundFilter): ?><option value="<?= escape_html($refundFilter) ?>" <?= $refundStatus === $refundFilter ? "selected" : "" ?>><?= escape_html(humanize_label($refundFilter)) ?></option><?php endforeach; ?>
                 </select>
                 <label for="refundType">Refund type</label>
                 <select class="form-select" id="refundType" name="refund_type">
@@ -290,7 +290,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                         </details>
                     </td>
                     <td><strong><?= money((int) $refund["amount"]) ?></strong><small>From <?= escape_html(ucwords(str_replace("_", " ", $refund["payment_type"]))) ?> payment of <?= money((int) $refund["payment_amount"]) ?></small><small>Remaining refundable on payment: <?= money(refundable_balance_for_payment((int) $refund["payment_id"])) ?></small></td>
-                    <td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(ucfirst($refund["status"])) ?></span><?php if ($refund["processed_at"]): ?><small><?= date("M j, Y g:i A", strtotime($refund["processed_at"])) ?></small><?php endif; ?></td>
+                    <td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span><?php if ($refund["processed_at"]): ?><small><?= date("M j, Y g:i A", strtotime($refund["processed_at"])) ?></small><?php endif; ?></td>
                     <td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td>
                     <td>
                         <?php
@@ -307,7 +307,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             <?= csrf_field() ?><input type="hidden" name="admin_action" value="refund_status"><input type="hidden" name="refund_id" value="<?= (int) $refund["id"] ?>">
                             <select class="form-select form-select-sm" name="refund_status" required>
                                 <option value="">Action</option>
-                                <?php foreach ($availableRefundTransitions as $transition): ?><option value="<?= escape_html($transition) ?>"><?= escape_html(match ($transition) { "approved" => "Approve", "processing" => "Mark Processing", "refunded" => "Mark Refunded", "rejected" => "Reject", "failed" => "Mark Failed", "cancelled" => "Cancel Refund", default => ucfirst($transition) }) ?></option><?php endforeach; ?>
+                                <?php foreach ($availableRefundTransitions as $transition): ?><option value="<?= escape_html($transition) ?>"><?= escape_html(match ($transition) { "approved" => "Approve", "processing" => "Mark Processing", "refunded" => "Mark Refunded", "rejected" => "Reject", "failed" => "Mark Failed", "cancelled" => "Cancel Refund", default => humanize_label($transition) }) ?></option><?php endforeach; ?>
                             </select>
                             <input class="form-control form-control-sm" name="refund_reference" maxlength="120" placeholder="Refund reference (auto-generated if blank on completion)">
                             <input class="form-control form-control-sm" name="refund_notes" maxlength="2000" placeholder="Admin note">

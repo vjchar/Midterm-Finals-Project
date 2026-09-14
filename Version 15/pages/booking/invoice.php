@@ -152,14 +152,14 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <div class="invoice-refunds">
                 <h2>Refund history</h2>
                 <table class="invoice-table"><thead><tr><th>Refund type</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-                <?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td><?= money((int) $refund["amount"]) ?><small><?= $refund["processed_at"] ? " · " . date("M j, Y", strtotime($refund["processed_at"])) : "" ?><?= $refund["reference_number"] ? " · " . escape_html($refund["reference_number"]) : "" ?></small></td><td><?= escape_html(ucfirst($refund["status"])) ?></td></tr><?php endforeach; ?>
+                <?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td><?= money((int) $refund["amount"]) ?><small><?= $refund["processed_at"] ? " · " . date("M j, Y", strtotime($refund["processed_at"])) : "" ?><?= $refund["reference_number"] ? " · " . escape_html($refund["reference_number"]) : "" ?></small></td><td><?= escape_html(humanize_label($refund["status"])) ?></td></tr><?php endforeach; ?>
                 </tbody></table>
             </div>
             <?php endif; ?>
             <div class="invoice-footer">
                 <p>
                     <strong>Status:</strong>
-                    <?= escape_html(ucfirst($booking["status"])) ?>
+                    <?= escape_html(humanize_label($booking["status"])) ?>
                 </p>
                 <p>This statement reflects records in the VJ Car Rental system. Pending payments are excluded until verified.</p>
             </div>

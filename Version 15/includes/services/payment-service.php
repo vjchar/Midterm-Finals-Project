@@ -342,7 +342,7 @@ function review_payment(
                 $paymentMessage .= " Your submitted requirements are now in verification.";
             }
         } else {
-            $paymentTitle = "Payment " . ucfirst($status);
+            $paymentTitle = "Payment " . humanize_label($status);
             $paymentMessage = "Your " . str_replace("_", " ", (string) $payment["payment_type"]) . " payment for booking " . $payment["reference"] . " was marked " . $status . ".";
         }
         notify_user(

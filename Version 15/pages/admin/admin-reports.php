@@ -393,7 +393,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $row["status"],
                                 ) ?>">
-                                    <?= escape_html(ucfirst($row["status"])) ?>
+                                    <?= escape_html(humanize_label($row["status"])) ?>
                                 </span>
                             </td>
                             <td><?= money((int) $row["total"]) ?></td>

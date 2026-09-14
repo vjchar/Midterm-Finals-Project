@@ -132,7 +132,7 @@ function vehicle_card(array $vehicle, bool $compact = false): void
                 <span class="fleet-state fleet-state--<?= status_class(
                     $vehicle["availability_status"],
                 ) ?>">
-                    <?= escape_html(ucfirst($vehicle["availability_status"])) ?>
+                    <?= escape_html(humanize_label($vehicle["availability_status"])) ?>
                 </span>
             </div>
 

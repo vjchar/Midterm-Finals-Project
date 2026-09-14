@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "from" => $review["status"],
             "to" => $status,
         ]);
-        flash("success", "Review status updated to " . $status . ".");
+        flash("success", "Review status updated to " . status_label($status) . ".");
         redirect(
             "admin-reviews.php?status=" .
                 urlencode((string) ($_GET["status"] ?? "all")),
@@ -88,7 +88,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
             <?php foreach (array_merge(["all"], $validStatuses) as $status): ?>
                 <a class="<?= $filter === $status
                     ? "active"
-                    : "" ?>" href="admin-reviews.php?status=<?= $status ?>"><?= ucfirst(
+                    : "" ?>" href="admin-reviews.php?status=<?= $status ?>"><?= humanize_label(
     $status,
 ) ?></a>
             <?php endforeach; ?>
@@ -104,7 +104,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                         <div>
                             <span class="status-badge status-badge--<?= status_class(
                                 $review["status"],
-                            ) ?>"><?= escape_html(ucfirst($review["status"])) ?></span>
+                            ) ?>"><?= escape_html(humanize_label($review["status"])) ?></span>
                             <h2><?= escape_html($review["title"]) ?></h2>
                             <small><?= escape_html(
                                 $review["vehicle_name"],
@@ -163,7 +163,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
     "status"
 ] === $status
     ? "selected"
-    : "" ?>><?= ucfirst($status) ?></option>
+    : "" ?>><?= humanize_label($status) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <button class="btn btn-primary" type="submit">Save Decision</button>

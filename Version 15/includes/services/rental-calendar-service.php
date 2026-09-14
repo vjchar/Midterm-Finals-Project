@@ -130,7 +130,7 @@ function calendar_event_from_booking(array $booking, string $type, string $at): 
     return [
         'key' => $type . '-' . $booking['id'],
         'type' => $type,
-        'title' => $booking['vehicle_name'] . ' — ' . ($labels[$type] ?? ucfirst($type)),
+        'title' => $booking['vehicle_name'] . ' — ' . ($labels[$type] ?? humanize_label($type)),
         'start_at' => $at,
         'end_at' => $at,
         'vehicle_id' => (int) $booking['vehicle_id'],

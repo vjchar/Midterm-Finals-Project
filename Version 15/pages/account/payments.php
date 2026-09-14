@@ -437,7 +437,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                                     </td>
                                                     <td>
                                                         <span class="status-badge status-badge--<?= status_class($paymentRecord["status"]) ?>">
-                                                            <?= escape_html(ucfirst($paymentRecord["status"])) ?>
+                                                            <?= escape_html(humanize_label($paymentRecord["status"])) ?>
                                                         </span>
                                                     </td>
                                                     <td>
@@ -473,7 +473,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             <td><a href="booking-view.php?reference=<?= urlencode($refund["booking_reference"]) ?>"><?= escape_html($refund["booking_reference"]) ?></a><small><?= escape_html($refund["vehicle_name"]) ?></small></td>
                             <td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?></td>
                             <td><?= money((int) $refund["amount"]) ?></td>
-                            <td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(ucfirst($refund["status"])) ?></span></td>
+                            <td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span></td>
                             <td><?= $refund["processed_at"] ? date("M j, Y g:i A", strtotime($refund["processed_at"])) : "—" ?></td>
                             <td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td>
                         </tr><?php endforeach; ?></tbody>

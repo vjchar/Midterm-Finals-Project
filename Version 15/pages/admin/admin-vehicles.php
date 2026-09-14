@@ -125,7 +125,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                             $item["availability_status"],
                                         ) ?>">
                                             <?= escape_html(
-                                                ucfirst(
+                                                humanize_label(
                                                     $item[
                                                         "availability_status"
                                                     ],

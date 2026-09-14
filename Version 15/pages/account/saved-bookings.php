@@ -81,7 +81,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             <span class="section-kicker">Saved booking <?= escape_html((string) $selectedDraft["reference"]) ?></span>
                             <h2><?= escape_html((string) $selectedDraft["vehicle_name"]) ?></h2>
                         </div>
-                        <span class="status-badge status-badge--<?= status_class((string) $selectedDraft["status"]) ?>"><?= escape_html(ucfirst((string) $selectedDraft["status"])) ?></span>
+                        <span class="status-badge status-badge--<?= status_class((string) $selectedDraft["status"]) ?>"><?= escape_html(humanize_label((string) $selectedDraft["status"])) ?></span>
                     </div>
                     <div class="draft-detail-grid">
                         <div><span>Pickup</span><strong><?= $selectedPickup->format("M j, Y · g:i A") ?></strong></div>

@@ -137,7 +137,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                     $item["availability_status"],
                                 ) ?>">
                                     <?= escape_html(
-                                        ucfirst($item["availability_status"]),
+                                        humanize_label($item["availability_status"]),
                                     ) ?>
                                 </span>
                                 <br>

@@ -72,7 +72,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                     class="<?= $status === $filter ? "active" : "" ?>"
                     href="admin-documents.php?status=<?= $filter ?>"
                 >
-                    <?= ucfirst($filter) ?>
+                    <?= humanize_label($filter) ?>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -136,7 +136,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $document["status"],
                                 ) ?>">
-                                    <?= escape_html(ucfirst($document["status"])) ?>
+                                    <?= escape_html(humanize_label($document["status"])) ?>
                                 </span>
                                 <?php if ($document["verifier_name"]): ?>
                                     <small>by <?= escape_html($document["verifier_name"]) ?></small>

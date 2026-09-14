@@ -180,7 +180,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             <td><?= escape_html(ucwords(str_replace("_", " ", $adjustment["request_type"]))) ?><small><?= escape_html($adjustment["customer_reason"] ?: "No reason provided") ?></small></td>
                             <td><?= date("M j, g:i A", strtotime($adjustment["original_return_at"])) ?><small>to <?= date("M j, g:i A", strtotime($adjustment["requested_return_at"])) ?></small></td>
                             <td><?= $adjustment["request_type"] === "extension" ? money((int) $adjustment["price_difference"]) : "—" ?></td>
-                            <td><span class="status-badge status-badge--<?= status_class($adjustment["status"]) ?>"><?= escape_html(ucfirst($adjustment["status"])) ?></span></td>
+                            <td><span class="status-badge status-badge--<?= status_class($adjustment["status"]) ?>"><?= escape_html(humanize_label($adjustment["status"])) ?></span></td>
                             <td>
                                 <?php if ($adjustment["status"] === "pending"): ?>
                                 <form method="post" class="admin-inline-form">
@@ -247,7 +247,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                     $rental["availability_status"],
                                 ) ?>">
                                     <?= escape_html(
-                                        ucfirst($rental["availability_status"]),
+                                        humanize_label($rental["availability_status"]),
                                     ) ?>
                                 </span>
                             </td>
@@ -255,7 +255,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $rental["status"],
                                 ) ?>">
-                                    <?= escape_html(ucfirst($rental["status"])) ?>
+                                    <?= escape_html(humanize_label($rental["status"])) ?>
                                 </span>
                             </td>
                             <td>
@@ -295,7 +295,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                     <span class="status-badge status-badge--<?= status_class(
                         $selected["status"],
                     ) ?>">
-                        <?= escape_html(ucfirst($selected["status"])) ?>
+                        <?= escape_html(humanize_label($selected["status"])) ?>
                     </span>
                 </div>
 
@@ -306,7 +306,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             <div class="adjustment-history-item">
                                 <strong><?= escape_html(ucwords(str_replace("_", " ", $adjustment["request_type"]))) ?></strong>
                                 <span><?= date("M j, Y g:i A", strtotime($adjustment["original_return_at"])) ?> → <?= date("M j, Y g:i A", strtotime($adjustment["requested_return_at"])) ?></span>
-                                <span class="status-badge status-badge--<?= status_class($adjustment["status"]) ?>"><?= escape_html(ucfirst($adjustment["status"])) ?></span>
+                                <span class="status-badge status-badge--<?= status_class($adjustment["status"]) ?>"><?= escape_html(humanize_label($adjustment["status"])) ?></span>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -320,7 +320,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                         $selected["status"] === "ready"
                             ? "checkout"
                             : "checkin";
-                    $actionLabel = ucfirst($action);
+                    $actionLabel = humanize_label($action);
                     $actionIcon =
                         $action === "checkout" ? "key" : "clipboard-check";
                     $priorInspection = $inspections["checkout"] ?? null;
@@ -470,7 +470,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                         <?php if ($selectedRefunds): ?>
                             <div class="admin-table-wrap mt-3"><table class="admin-table"><thead><tr><th>Refund type</th><th>Amount</th><th>Status</th><th>Reference</th></tr></thead><tbody>
                             <?php foreach ($selectedRefunds as $refund): ?>
-                                <tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?></td><td><?= money((int) $refund["amount"]) ?></td><td><?= escape_html(ucfirst((string) $refund["status"])) ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr>
+                                <tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?></td><td><?= money((int) $refund["amount"]) ?></td><td><?= escape_html(humanize_label((string) $refund["status"])) ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr>
                             <?php endforeach; ?>
                             </tbody></table></div>
                         <?php endif; ?>

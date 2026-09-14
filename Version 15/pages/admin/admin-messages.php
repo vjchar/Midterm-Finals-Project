@@ -74,7 +74,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
             <?php foreach (array_merge(["all"], $validStatuses) as $status): ?>
                 <a class="<?= $filter === $status
                     ? "active"
-                    : "" ?>" href="admin-messages.php?status=<?= $status ?>"><?= ucfirst(
+                    : "" ?>" href="admin-messages.php?status=<?= $status ?>"><?= humanize_label(
     $status,
 ) ?></a>
             <?php endforeach; ?>
@@ -87,7 +87,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             <span class="status-badge status-badge--<?= status_class(
                                 $message["status"],
                             ) ?>"><?= escape_html(
-    ucfirst($message["status"]),
+    humanize_label($message["status"]),
 ) ?></span>
                             <h2><?= escape_html($message["subject"]) ?></h2>
                             <small><?= date(
@@ -122,7 +122,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
     "status"
 ] === $status
     ? "selected"
-    : "" ?>><?= ucfirst($status) ?></option>
+    : "" ?>><?= humanize_label($status) ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <button class="btn btn-primary" type="submit">Save</button>

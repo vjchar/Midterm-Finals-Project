@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $readyLabel = $booking["pickup_method"] === "Vehicle delivery" ? "Ready for Delivery" : "Ready for Pickup";
             flash("success", $readyLabel . ". The customer was notified.");
         } else {
-            flash("success", "Booking status updated to " . $newStatus . ".");
+            flash("success", "Booking status updated to " . status_label($newStatus) . ".");
         }
         redirect("admin-bookings.php?reference=" . urlencode($booking["reference"]));
     } catch (Throwable $error) {
@@ -111,7 +111,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
             <?php foreach ($validFilters as $filter): ?>
                 <a class="<?= $statusFilter === $filter
                     ? "active"
-                    : "" ?>" href="admin-bookings.php?status=<?= $filter ?>"><?= ucfirst(
+                    : "" ?>" href="admin-bookings.php?status=<?= $filter ?>"><?= humanize_label(
     $filter,
 ) ?></a>
             <?php endforeach; ?>
@@ -157,7 +157,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                 <span class="status-badge status-badge--<?= status_class(
                                     $booking["status"],
                                 ) ?>"><?= escape_html(
-    ucfirst($booking["status"]),
+    humanize_label($booking["status"]),
 ) ?></span>
                             </td>
                             <td><?= money((int) $booking["total"]) ?></td>
@@ -294,10 +294,10 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                 <?php endif; ?>
 
                 <?php if ($selectedModification): ?>
-                    <div class="alert alert-info mt-3">Booking modification request: <strong><?= escape_html(ucfirst($selectedModification["status"])) ?></strong>. <?php if ($selectedModification["status"] === "approved" && (int) $selectedModification["price_difference"] > 0): ?>Additional payment of <?= money((int) $selectedModification["price_difference"]) ?> is required before activation.<?php endif; ?></div>
+                    <div class="alert alert-info mt-3">Booking modification request: <strong><?= escape_html(humanize_label($selectedModification["status"])) ?></strong>. <?php if ($selectedModification["status"] === "approved" && (int) $selectedModification["price_difference"] > 0): ?>Additional payment of <?= money((int) $selectedModification["price_difference"]) ?> is required before activation.<?php endif; ?></div>
                 <?php endif; ?>
                 <?php if ($selectedCancellation): ?>
-                    <div class="alert alert-warning mt-3">Cancellation request: <strong><?= escape_html(ucfirst($selectedCancellation["status"])) ?></strong>.</div>
+                    <div class="alert alert-warning mt-3">Cancellation request: <strong><?= escape_html(humanize_label($selectedCancellation["status"])) ?></strong>.</div>
                 <?php endif; ?>
 
                 <?php if ($readyTransitionAvailable): ?>
@@ -338,7 +338,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                     $availableTransitions
                                     as $next
                                 ): ?>
-                                    <option value="<?= $next ?>"><?= ucfirst(
+                                    <option value="<?= $next ?>"><?= humanize_label(
     $next,
 ) ?></option>
                                 <?php endforeach; ?>

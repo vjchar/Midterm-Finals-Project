@@ -300,7 +300,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                                 $booking["status"],
                                             ) ?>">
                                                 <?= escape_html(
-                                                    ucfirst($booking["status"]),
+                                                    humanize_label($booking["status"]),
                                                 ) ?>
                                             </span>
                                         </td>

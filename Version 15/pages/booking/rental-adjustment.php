@@ -65,12 +65,12 @@ require dirname(__DIR__, 2) . '/includes/header.php';
     <div class="container">
         <?php foreach ($errors as $error): ?><div class="alert alert-danger"><?= escape_html($error) ?></div><?php endforeach; ?>
         <?php if ($unresolved): ?>
-            <div class="alert alert-warning">You already have a <?= escape_html(str_replace('_',' ',$unresolved['request_type'])) ?> request with status <strong><?= escape_html($unresolved['status']) ?></strong>. Resolve it before creating another.</div>
+            <div class="alert alert-warning">You already have a <?= escape_html(humanize_label((string) $unresolved['request_type'])) ?> request with status <strong><?= escape_html(status_label((string) $unresolved['status'])) ?></strong>. Resolve it before creating another.</div>
         <?php endif; ?>
         <div class="rental-adjustment-overview">
             <article><span>Original scheduled return</span><strong><?= date('M j, Y g:i A', strtotime((string)($booking['original_return_at'] ?: $booking['return_at']))) ?></strong></article>
             <article><span>Current scheduled return</span><strong><?= date('M j, Y g:i A', strtotime($booking['return_at'])) ?></strong></article>
-            <article><span>Rental status</span><strong><?= escape_html(ucfirst($booking['status'])) ?></strong></article>
+            <article><span>Rental status</span><strong><?= escape_html(humanize_label($booking['status'])) ?></strong></article>
         </div>
         <?php if (!$unresolved): ?>
         <div class="row g-4 mt-1">
@@ -131,7 +131,7 @@ require dirname(__DIR__, 2) . '/includes/header.php';
                     <td><?= date('M j, Y g:i A', strtotime($item['original_return_at'])) ?></td>
                     <td><?= date('M j, Y g:i A', strtotime($item['requested_return_at'])) ?></td>
                     <td><?= $item['request_type'] === 'extension' ? money((int)$item['price_difference']) : '—' ?></td>
-                    <td><span class="status-badge status-badge--<?= status_class($item['status']) ?>"><?= escape_html(ucfirst($item['status'])) ?></span></td>
+                    <td><span class="status-badge status-badge--<?= status_class($item['status']) ?>"><?= escape_html(humanize_label($item['status'])) ?></span></td>
                     <td><?= date('M j, Y g:i A', strtotime($item['created_at'])) ?></td>
                     <td><?php if ($item['status'] === 'pending'): ?><form method="post" data-confirm="Cancel this pending rental adjustment request?"><?= csrf_field() ?><input type="hidden" name="reference" value="<?= escape_html($booking['reference']) ?>"><input type="hidden" name="adjustment_id" value="<?= (int)$item['id'] ?>"><button class="btn btn-outline btn-sm" name="action" value="cancel_request">Cancel</button></form><?php elseif ($item['request_type'] === 'extension' && $item['status'] === 'approved'): ?><a class="btn btn-primary btn-sm" href="payments.php?reference=<?= urlencode($booking['reference']) ?>">Pay Extension</a><?php endif; ?></td>
                 </tr><?php endforeach; ?></tbody></table></div>
