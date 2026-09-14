@@ -1,0 +1,12 @@
+storage/logs/*.log
+storage/documents/*
+storage/payment-proofs/*
+storage/reviews/*
+storage/vehicle-uploads/*
+!storage/logs/.gitkeep
+!storage/documents/.gitkeep
+!storage/payment-proofs/.gitkeep
+!storage/reviews/.gitkeep
+!storage/vehicle-uploads/.gitkeep
+Thumbs.db
+.DS_Store
