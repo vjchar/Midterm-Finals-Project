@@ -16,9 +16,8 @@ function current_user(bool $refresh = false): ?array
         return $cachedUser = null;
     }
     $statement = database()->prepare(
-        'SELECT u.id, u.name, u.email, u.phone, r.name AS role, r.label AS role_label,
-                u.status, u.last_login_at, u.created_at
-         FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? LIMIT 1',
+        'SELECT id, name, email, phone, role, status, last_login_at, created_at
+         FROM users WHERE id = ? LIMIT 1',
     );
     $statement->execute([$userId]);
     $user = $statement->fetch();
@@ -44,8 +43,7 @@ function admin_exists(): bool
 {
     return (int) database()
         ->query(
-            "SELECT COUNT(*) FROM users u JOIN roles r ON r.id = u.role_id
-         WHERE r.name = 'admin' AND u.status = 'active'",
+            "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'",
         )
         ->fetchColumn() > 0;
 }
@@ -266,11 +264,11 @@ function register_user(array $input, string $role = "customer"): int
     }
     $currentTimestamp = date("Y-m-d H:i:s");
     $statement = database()->prepare(
-        "INSERT INTO users (role_id, name, email, phone, password_hash, status, created_at, updated_at) 
+        "INSERT INTO users (role, name, email, phone, password_hash, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     );
     $statement->execute([
-        role_id($role),
+        $role,
         $name,
         $email,
         $phone,

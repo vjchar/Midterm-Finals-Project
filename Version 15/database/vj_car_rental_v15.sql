@@ -627,25 +627,6 @@ CREATE TABLE `reviews` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `roles`
---
-
-DROP TABLE IF EXISTS `roles`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `roles` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) NOT NULL,
-  `label` varchar(80) NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `users`
 --
 
@@ -654,7 +635,7 @@ DROP TABLE IF EXISTS `users`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `role_id` bigint(20) unsigned NOT NULL,
+  `role` enum('customer','admin') NOT NULL DEFAULT 'customer',
   `name` varchar(120) NOT NULL,
   `email` varchar(190) NOT NULL,
   `phone` varchar(40) DEFAULT '',
@@ -665,9 +646,8 @@ CREATE TABLE `users` (
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
-  KEY `role_id` (`role_id`),
-  CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `role` (`role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -794,7 +774,8 @@ CREATE TABLE `booking_draft_addons` (
 -- Dump completed on 2026-09-09  7:15:23
 
 
--- Safe reference data: roles, vehicles, rental add-ons, and promotions only.
+-- Safe reference data: vehicles, rental add-ons, and promotions only.
+-- No administrator account is seeded. Create the first administrator through setup.php after import.
 
 -- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
 --
@@ -812,20 +793,8 @@ CREATE TABLE `booking_draft_addons` (
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
---
--- Dumping data for table `roles`
---
-
-LOCK TABLES `roles` WRITE;
-/*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'admin','Administrator','Full access to management, reporting, and account administration.','2026-09-01 11:31:54','2026-09-01 11:31:54'),(2,'customer','Customer','Customer access to reservations, favorites, profile, and verified reviews.','2026-09-01 11:31:54','2026-09-01 11:31:54');
-
--- Development administrator inherited from Version 8. Change this password after first sign-in.
-INSERT INTO `users` (`id`,`role_id`,`name`,`email`,`phone`,`password_hash`,`status`,`last_login_at`,`created_at`,`updated_at`) VALUES
-(1,1,'VJ Administrator','admin@vjcarrental.local','','$2y$12$jMyhHWmEKvlSNTEoDbF5Zuu/Rr7fNCZCg7BuOy3q.GY2oZh9mA.Uq','active',NULL,'2026-09-11 00:00:00','2026-09-11 00:00:00');
-
-/*!40000 ALTER TABLE `roles` ENABLE KEYS */;
-UNLOCK TABLES;
+-- The users table intentionally starts empty.
+-- Open setup.php after importing this database to create the first administrator.
 
 --
 -- Dumping data for table `vehicles`

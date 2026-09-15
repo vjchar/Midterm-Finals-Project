@@ -12,7 +12,7 @@ $countQueries = [
     "bookings" =>
         "SELECT COUNT(*) FROM bookings WHERE status IN ('pending', 'confirmed', 'ready', 'active', 'returned')",
     "customers" =>
-        "SELECT COUNT(*) FROM users u JOIN roles r ON r.id = u.role_id WHERE r.name = 'customer' AND u.status = 'active'",
+        "SELECT COUNT(*) FROM users WHERE role = 'customer' AND status = 'active'",
     "pending_documents" =>
         "SELECT COUNT(*) FROM customer_documents WHERE status = 'pending'",
     "pending_payments" =>

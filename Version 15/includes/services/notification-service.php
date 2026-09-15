@@ -40,7 +40,7 @@ function notify_admins(
     ?int $bookingId = null,
 ): void {
     $statement = database()->query(
-        "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.name = 'admin' AND u.status = 'active'",
+        "SELECT id FROM users WHERE role = 'admin' AND status = 'active'",
     );
     foreach ($statement->fetchAll() as $administrator) {
         notify_user(

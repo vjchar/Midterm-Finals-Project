@@ -33,7 +33,6 @@ function database(): PDO
     return $databaseConnection;
 }
 
-require_once __DIR__ . "/repositories/role-repository.php";
 require_once __DIR__ . "/repositories/vehicle-repository.php";
 require_once __DIR__ . "/repositories/catalog-repository.php";
 require_once __DIR__ . "/repositories/booking-repository.php";

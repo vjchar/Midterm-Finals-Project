@@ -138,6 +138,7 @@ function create_refund_requests_for_booking(
 
     $remaining = $amount;
     $created = [];
+    $normalizedReason = mb_substr(trim($reason), 0, 2000);
     $now = date('Y-m-d H:i:s');
     foreach ($payments->fetchAll() as $payment) {
         if ($remaining <= 0) {

@@ -21,8 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
         $statement = database()->prepare(
-            'SELECT u.id, u.name, u.email, r.name AS role, u.status
-             FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? LIMIT 1',
+            'SELECT id, name, email, role, status FROM users WHERE id = ? LIMIT 1',
         );
         $statement->execute([$userId]);
         $target = $statement->fetch();
@@ -43,8 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         ) {
             $activeAdmins = (int) database()
                 ->query(
-                    "SELECT COUNT(*) FROM users u JOIN roles r ON r.id = u.role_id
-                 WHERE r.name = 'admin' AND u.status = 'active'",
+                    "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'",
                 )
                 ->fetchColumn();
             if ($activeAdmins <= 1) {
@@ -54,10 +52,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
         $update = database()->prepare(
-            "UPDATE users SET role_id = ?, status = ?, updated_at = ? WHERE id = ?",
+            "UPDATE users SET role = ?, status = ?, updated_at = ? WHERE id = ?",
         );
         $update->execute([
-            role_id($role),
+            $role,
             $status,
             date("Y-m-d H:i:s"),
             $userId,
@@ -77,8 +75,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 $query = trim((string) ($_GET["q"] ?? ""));
-$sql = "SELECT u.*, r.name AS role, r.label AS role_label, COALESCE(bc.booking_count, 0) AS booking_count
-        FROM users u JOIN roles r ON r.id = u.role_id
+$sql = "SELECT u.*, COALESCE(bc.booking_count, 0) AS booking_count
+        FROM users u
         LEFT JOIN (SELECT user_id, COUNT(*) AS booking_count FROM bookings GROUP BY user_id) bc ON bc.user_id = u.id";
 $parameters = [];
 if ($query !== "") {
