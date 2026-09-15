@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $authenticatedUser = require_customer();
-require_once dirname(__DIR__, 2) . "/includes/components/vehicle-card.php";
 
 $vehicles = vehicle_all();
 $savedVehicleSlugs = favorite_slugs((int) $authenticatedUser["id"]);

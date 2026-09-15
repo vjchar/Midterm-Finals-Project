@@ -18,8 +18,15 @@ DirectoryIndex index.php
     RewriteRule ^booking-management\.php$ pages/admin/admin-bookings.php [L,QSA,NC]
     RewriteRule ^payment-management\.php$ pages/admin/admin-payments.php [L,QSA,NC]
     RewriteRule ^review-management\.php$ pages/admin/admin-reviews.php [L,QSA,NC]
-    RewriteRule ^(availability|booking-estimate|favorite-action|fleet-availability|promo-check|review-photo|secure-file)\.php$ actions/$1.php [L,QSA,NC]
-    RewriteRule ^(403|404|500)\.php$ errors/$1.php [L,QSA,NC]
+    RewriteRule ^availability\.php$ actions/api.php?action=availability [L,QSA,NC]
+    RewriteRule ^booking-estimate\.php$ actions/api.php?action=booking-estimate [L,QSA,NC]
+    RewriteRule ^favorite-action\.php$ actions/api.php?action=favorite [L,QSA,NC]
+    RewriteRule ^fleet-availability\.php$ actions/api.php?action=fleet-availability [L,QSA,NC]
+    RewriteRule ^promo-check\.php$ actions/api.php?action=promo-check [L,QSA,NC]
+    RewriteRule ^(review-photo|secure-file)\.php$ actions/$1.php [L,QSA,NC]
+    RewriteRule ^403\.php$ errors/error.php?code=403 [L,QSA,NC]
+    RewriteRule ^404\.php$ errors/error.php?code=404 [L,QSA,NC]
+    RewriteRule ^500\.php$ errors/error.php?code=500 [L,QSA,NC]
     RewriteRule ^setup\.php$ pages/system/setup.php [L,QSA,NC]
 </IfModule>
 

@@ -67,11 +67,8 @@ function require_admin(): array
     $user = require_auth();
     if ($user["role"] !== "admin") {
         http_response_code(403);
-        require ROOT .
-            DIRECTORY_SEPARATOR .
-            "errors" .
-            DIRECTORY_SEPARATOR .
-            "403.php";
+        $errorCode = 403;
+        require ROOT . DIRECTORY_SEPARATOR . "errors" . DIRECTORY_SEPARATOR . "error.php";
         exit();
     }
     return $user;
@@ -82,11 +79,8 @@ function require_customer(): array
     $user = require_auth();
     if ($user["role"] !== "customer") {
         http_response_code(403);
-        require ROOT .
-            DIRECTORY_SEPARATOR .
-            "errors" .
-            DIRECTORY_SEPARATOR .
-            "403.php";
+        $errorCode = 403;
+        require ROOT . DIRECTORY_SEPARATOR . "errors" . DIRECTORY_SEPARATOR . "error.php";
         exit();
     }
     return $user;

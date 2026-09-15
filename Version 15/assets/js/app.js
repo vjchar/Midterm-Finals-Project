@@ -313,4 +313,87 @@ document.addEventListener("DOMContentLoaded", function () {
         dismissButton.setAttribute("aria-label", "Close message");
         alert.appendChild(dismissButton);
     });
+
+    const paymentMethodField = document.querySelector("[data-payment-method]");
+    const paymentAmountField = document.querySelector("[data-payment-amount-input]");
+
+    if (paymentMethodField) {
+        const paymentDetailPanels = Array.from(
+            document.querySelectorAll("[data-payment-details]"),
+        );
+        const electronicPaymentFields = Array.from(
+            document.querySelectorAll("[data-electronic-payment-required]"),
+        );
+        const amountLabels = Array.from(
+            document.querySelectorAll("[data-payment-amount]"),
+        );
+
+        function updatePaymentDetails() {
+            const selectedMethod = paymentMethodField.value;
+            paymentDetailPanels.forEach(function (panel) {
+                panel.hidden = panel.dataset.paymentDetails !== selectedMethod;
+            });
+
+            const electronicMethod =
+                selectedMethod === "gcash" ||
+                selectedMethod === "bank_transfer";
+            electronicPaymentFields.forEach(function (field) {
+                field.required = electronicMethod;
+            });
+        }
+
+        function updatePaymentAmountLabels() {
+            if (!paymentAmountField) {
+                return;
+            }
+            const amount = Number.parseInt(paymentAmountField.value, 10);
+            const displayAmount = Number.isFinite(amount) && amount > 0
+                ? new Intl.NumberFormat("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                      maximumFractionDigits: 0,
+                  }).format(amount)
+                : "Enter the amount below";
+            amountLabels.forEach(function (label) {
+                label.textContent = displayAmount;
+            });
+        }
+
+        paymentMethodField.addEventListener("change", updatePaymentDetails);
+        if (paymentAmountField) {
+            paymentAmountField.addEventListener("input", updatePaymentAmountLabels);
+        }
+        updatePaymentDetails();
+        updatePaymentAmountLabels();
+    }
+
+    document.querySelectorAll("[data-copy-payment-number]").forEach(function (button) {
+        button.addEventListener("click", async function () {
+            const valueElement = button.parentElement
+                ? button.parentElement.querySelector("[data-copy-value]")
+                : null;
+            const value = valueElement ? valueElement.dataset.copyValue || "" : "";
+            if (!value) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(value);
+                const originalLabel = button.textContent;
+                button.textContent = "Copied";
+                window.setTimeout(function () {
+                    button.textContent = originalLabel;
+                }, 1200);
+            } catch (error) {
+                // Clipboard access can be unavailable on non-secure localhost variants.
+                if (valueElement) {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(valueElement);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+        });
+    });
+
 });

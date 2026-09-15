@@ -34,3 +34,11 @@ const BOOKING_DRAFT_TTL_DAYS = 7;
 // the default online-policy refund is zero unless a later policy is configured.
 const CANCELLATION_CUSTOMER_CUTOFF_HOURS = 24;
 const CANCELLATION_REFUND_CUTOFF_HOURS = 24;
+
+// Manual payment account details. Replace these placeholders with the actual
+// VJ Car Rental payment details before deployment.
+const PAYMENT_GCASH_NAME = "Vj Charles Bernardino";
+const PAYMENT_GCASH_NUMBER = "0994 894 5174";
+const PAYMENT_BANK_NAME = "VJ Charles O. Bernardino";
+const PAYMENT_BANK_ACCOUNT_NAME = "VJ Charles O. Bernardino";
+const PAYMENT_BANK_ACCOUNT_NUMBER = "2246 6879 1579";

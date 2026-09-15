@@ -142,6 +142,7 @@ $approvedExtension = $selectedBooking ? approved_extension_for_booking((int) $se
 $approvedModification = $selectedBooking ? approved_modification_for_booking((int) $selectedBooking["id"]) : null;
 $journey = $selectedBooking ? booking_next_step($selectedBooking) : null;
 $customerRefunds = refunds_for_user((int) $authenticatedUser["id"]);
+$paymentAccounts = payment_account_details();
 $pageTitle = "Payments & Refunds | VJ Car Rental";
 
 require dirname(__DIR__, 2) . "/includes/header.php";
@@ -151,9 +152,9 @@ require dirname(__DIR__, 2) . "/includes/header.php";
         <span class="section-kicker">Step 2 · Secure payment</span>
         <h1>Booking payments & refunds</h1>
         <p>
-            Submit a payment reference or proof, then track administrator
-            verification. This school build records payments but does not charge
-            cards online.
+            Send payment using the configured GCash number or bank account,
+            then submit your transaction reference and proof for administrator
+            verification. This school build does not charge cards online.
         </p>
     </div>
 </section>
@@ -309,12 +310,51 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                             class="form-select"
                                             id="paymentMethod"
                                             name="method"
+                                            data-payment-method
                                             required
                                         >
                                             <option value="gcash">GCash</option>
                                             <option value="bank_transfer">Bank transfer</option>
                                             <option value="cash">Cash at branch</option>
                                         </select>
+                                    </div>
+
+                                    <div class="col-12" data-payment-details="gcash">
+                                        <div class="border rounded p-3">
+                                            <span class="section-kicker">GCash payment details</span>
+                                            <p class="mb-2">Send the exact amount to the GCash account below, save your confirmation, then submit the reference number and payment proof.</p>
+                                            <dl class="mb-0">
+                                                <dt>Account Name</dt>
+                                                <dd><?= escape_html($paymentAccounts["gcash"]["account_name"]) ?></dd>
+                                                <dt>GCash Number</dt>
+                                                <dd>
+                                                    <strong data-copy-value="<?= escape_html($paymentAccounts["gcash"]["account_number"]) ?>"><?= escape_html($paymentAccounts["gcash"]["account_number"]) ?></strong>
+                                                    <button class="btn btn-outline btn-sm ms-2" type="button" data-copy-payment-number>Copy</button>
+                                                </dd>
+                                                <dt>Amount to Send</dt>
+                                                <dd><strong data-payment-amount>Enter the amount below</strong></dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12" data-payment-details="bank_transfer" hidden>
+                                        <div class="border rounded p-3">
+                                            <span class="section-kicker">Bank transfer details</span>
+                                            <p class="mb-2">Transfer the exact amount to the bank account below, save your confirmation, then submit the reference number and payment proof.</p>
+                                            <dl class="mb-0">
+                                                <dt>Bank</dt>
+                                                <dd><?= escape_html($paymentAccounts["bank_transfer"]["bank_name"]) ?></dd>
+                                                <dt>Account Name</dt>
+                                                <dd><?= escape_html($paymentAccounts["bank_transfer"]["account_name"]) ?></dd>
+                                                <dt>Account Number</dt>
+                                                <dd>
+                                                    <strong data-copy-value="<?= escape_html($paymentAccounts["bank_transfer"]["account_number"]) ?>"><?= escape_html($paymentAccounts["bank_transfer"]["account_number"]) ?></strong>
+                                                    <button class="btn btn-outline btn-sm ms-2" type="button" data-copy-payment-number>Copy</button>
+                                                </dd>
+                                                <dt>Amount to Send</dt>
+                                                <dd><strong data-payment-amount>Enter the amount below</strong></dd>
+                                            </dl>
+                                        </div>
                                     </div>
 
                                     <div class="col-12">
@@ -326,6 +366,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                             id="paymentAmount"
                                             name="amount"
                                             type="number"
+                                            data-payment-amount-input
                                             min="1"
                                             step="1"
                                             required
@@ -334,7 +375,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
 
                                     <div class="col-12">
                                         <label class="form-label" for="transactionReference">
-                                            Transaction reference
+                                            Transaction / reference number
                                         </label>
                                         <input
                                             class="form-control"
@@ -342,12 +383,13 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                             name="transaction_reference"
                                             maxlength="120"
                                             autocomplete="off"
+                                            data-electronic-payment-required
                                         >
                                     </div>
 
                                     <div class="col-12">
                                         <label class="form-label" for="paymentProof">
-                                            Payment proof (optional JPG, PNG, or PDF)
+                                            Payment proof (JPG, PNG, or PDF)
                                         </label>
                                         <input
                                             class="form-control"
@@ -355,6 +397,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                             name="payment_proof"
                                             type="file"
                                             accept=".jpg,.jpeg,.png,.pdf"
+                                            data-electronic-payment-required
                                         >
                                     </div>
 
@@ -422,15 +465,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                                         ) ?>
                                                     </td>
                                                     <td>
-                                                        <?= escape_html(
-                                                            ucwords(
-                                                                str_replace(
-                                                                    "_",
-                                                                    " ",
-                                                                    $paymentRecord["method"],
-                                                                ),
-                                                            ),
-                                                        ) ?>
+                                                        <?= escape_html(payment_method_label((string) $paymentRecord["method"])) ?>
                                                     </td>
                                                     <td>
                                                         <?= money((int) $paymentRecord["amount"]) ?>

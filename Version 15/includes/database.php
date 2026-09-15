@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Return the process-local PDO connection used by repositories and services.
+ * Return the process-local PDO connection used by the application services.
  */
 function database(): PDO
 {
@@ -32,7 +32,3 @@ function database(): PDO
 
     return $databaseConnection;
 }
-
-require_once __DIR__ . "/repositories/vehicle-repository.php";
-require_once __DIR__ . "/repositories/catalog-repository.php";
-require_once __DIR__ . "/repositories/booking-repository.php";

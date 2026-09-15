@@ -163,15 +163,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                             ),
                                         ),
                                     ) ?> ·
-                                    <?= escape_html(
-                                        ucwords(
-                                            str_replace(
-                                                "_",
-                                                " ",
-                                                $payment["method"],
-                                            ),
-                                        ),
-                                    ) ?>
+                                    <?= escape_html(payment_method_label((string) $payment["method"])) ?>
                                 </small>
                             </td>
                             <td>

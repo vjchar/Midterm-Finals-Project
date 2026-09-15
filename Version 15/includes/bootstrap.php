@@ -111,11 +111,8 @@ if (PHP_SAPI !== "cli") {
                 "</pre>";
             exit();
         }
-        require ROOT .
-            DIRECTORY_SEPARATOR .
-            "errors" .
-            DIRECTORY_SEPARATOR .
-            "500.php";
+        $errorCode = 500;
+        require ROOT . DIRECTORY_SEPARATOR . "errors" . DIRECTORY_SEPARATOR . "error.php";
         exit();
     });
 }
@@ -185,8 +182,11 @@ if (!headers_sent()) {
 require_once __DIR__ . "/helpers.php";
 require_once __DIR__ . "/database.php";
 require_once __DIR__ . "/auth.php";
+require_once __DIR__ . "/notification-service.php";
+require_once __DIR__ . "/document-service.php";
+require_once __DIR__ . "/vehicle-service.php";
 require_once __DIR__ . "/booking-service.php";
+require_once __DIR__ . "/booking-management-service.php";
 require_once __DIR__ . "/rental-service.php";
-require_once __DIR__ . "/services/booking-draft-service.php";
-require_once __DIR__ . "/services/booking-journey-service.php";
-require_once __DIR__ . "/components/booking-progress.php";
+require_once __DIR__ . "/payment-service.php";
+require_once __DIR__ . "/booking-journey-service.php";
