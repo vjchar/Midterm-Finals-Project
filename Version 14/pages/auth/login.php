@@ -96,7 +96,6 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     $returnTo,
                 ) ?>">Create an account</a>
                 </p>
-                <p class="auth-switch">Administrator accounts automatically open the management dashboard.</p>
             </form>
         </div>
     </div>
