@@ -1,1 +1,4 @@
+# FILE: storage/payment-proofs/.gitkeep
+# PURPOSE: Directory placeholder tracked by Git.
+# USAGE: Keeps the empty storage/payment-proofs directory present in the repository until runtime files are created there.
 

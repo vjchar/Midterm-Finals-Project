@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-maintenance.php
+ * FILE PURPOSE: Administrator vehicle maintenance record management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $admin = require_admin();
@@ -12,118 +21,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
         require_csrf();
         $action = post_string("action");
-
         if ($action === "create") {
-            $vehicleId = filter_var(
-                $_POST["vehicle_id"] ?? null,
-                FILTER_VALIDATE_INT,
-            );
-            $cost = filter_var($_POST["cost"] ?? 0, FILTER_VALIDATE_INT, [
-                "options" => ["min_range" => 0, "max_range" => 10000000],
-            ]);
-            $startsAt = DateTimeImmutable::createFromFormat(
-                "Y-m-d\TH:i",
-                post_string("starts_at"),
-            );
-
-            if (
-                !$vehicleId ||
-                $cost === false ||
-                !$startsAt ||
-                mb_strlen(post_string("title")) < 3 ||
-                mb_strlen(post_string("description")) < 5
-            ) {
-                throw new InvalidArgumentException(
-                    "Complete all maintenance fields with valid values.",
-                );
-            }
-
-            $currentTimestamp = date("Y-m-d H:i:s");
-            $statement = database()->prepare(
-                "INSERT INTO maintenance_records
-                    (vehicle_id, title, description, status, starts_at, cost, created_by, created_at, updated_at)
-                 VALUES (?, ?, ?, 'scheduled', ?, ?, ?, ?, ?)",
-            );
-            $statement->execute([
-                $vehicleId,
-                mb_substr(post_string("title"), 0, 160),
-                mb_substr(post_string("description"), 0, 3000),
-                $startsAt->format("Y-m-d H:i:s"),
-                $cost,
-                $admin["id"],
-                $currentTimestamp,
-                $currentTimestamp,
-            ]);
-            write_audit(
-                "maintenance_created",
-                "maintenance_record",
-                (int) database()->lastInsertId(),
-            );
+            create_maintenance_record((int) $admin["id"], $_POST);
         } elseif ($action === "status") {
             $recordId = filter_var(
                 $_POST["record_id"] ?? null,
                 FILTER_VALIDATE_INT,
             );
-            $status = post_string("status");
-
-            if (
-                !$recordId ||
-                !in_array(
-                    $status,
-                    ["scheduled", "in_progress", "completed", "cancelled"],
-                    true,
-                )
-            ) {
+            if (!$recordId) {
                 throw new InvalidArgumentException(
                     "Choose a valid maintenance update.",
                 );
             }
-
-            $select = database()->prepare(
-                "SELECT * FROM maintenance_records WHERE id = ?",
-            );
-            $select->execute([$recordId]);
-            $record = $select->fetch();
-            if (!$record) {
-                throw new RuntimeException("Maintenance record not found.");
-            }
-
-            $currentTimestamp = date("Y-m-d H:i:s");
-            $update = database()->prepare(
-                "UPDATE maintenance_records SET status = ?, ends_at = ?, updated_at = ? WHERE id = ?",
-            );
-            $update->execute([
-                $status,
-                in_array($status, ["completed", "cancelled"], true)
-                    ? $currentTimestamp
-                    : null,
-                $currentTimestamp,
-                $recordId,
-            ]);
-
-            if ($status === "in_progress") {
-                database()
-                    ->prepare(
-                        "UPDATE vehicles SET availability_status = 'maintenance', updated_at = ? WHERE id = ?",
-                    )
-                    ->execute([$currentTimestamp, $record["vehicle_id"]]);
-            } elseif (in_array($status, ["completed", "cancelled"], true)) {
-                database()
-                    ->prepare(
-                        "UPDATE vehicles SET availability_status = 'available', updated_at = ? WHERE id = ?",
-                    )
-                    ->execute([$currentTimestamp, $record["vehicle_id"]]);
-                sync_vehicle_status((int) $record["vehicle_id"]);
-            }
-
-            write_audit(
-                "maintenance_status_updated",
-                "maintenance_record",
-                $recordId,
-                ["status" => $status],
-            );
+            update_maintenance_status((int) $recordId, post_string("status"));
+        } else {
+            throw new InvalidArgumentException("Choose a valid maintenance action.");
         }
-
         flash("success", "Maintenance record saved.");
         redirect("admin-maintenance.php");
     } catch (Throwable $error) {
@@ -131,15 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-$records = database()
-    ->query(
-        'SELECT m.*, v.name AS vehicle_name, u.name AS creator_name
-     FROM maintenance_records m
-     JOIN vehicles v ON v.id = m.vehicle_id
-     JOIN users u ON u.id = m.created_by
-     ORDER BY m.created_at DESC',
-    )
-    ->fetchAll();
+$records = maintenance_records();
 
 $pageTitle = "Fleet Maintenance | VJ Car Rental";
 require dirname(__DIR__, 2) . "/includes/header.php";

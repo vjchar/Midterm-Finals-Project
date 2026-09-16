@@ -1,3 +1,8 @@
+# FILE: .htaccess
+# PURPOSE: Apache configuration for the public application root.
+# USAGE: Disables directory listings, protects internal folders, and rewrites friendly public URLs to organized page files.
+# Maintenance: keep these rules aligned with the application structure.
+
 Options -Indexes
 DirectoryIndex index.php
 
@@ -30,7 +35,7 @@ DirectoryIndex index.php
     RewriteRule ^setup\.php$ pages/system/setup.php [L,QSA,NC]
 </IfModule>
 
-<FilesMatch "(?i)^(?:\.|README(?:$|[._-])|RUBRIC(?:$|[._-])|tailwind\.config\.js$)">
+<FilesMatch "(?i)^(?:\.|README(?:$|[._-])|tailwind\.config\.js$)">
     Require all denied
 </FilesMatch>
 

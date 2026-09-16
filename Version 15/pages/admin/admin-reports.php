@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-reports.php
+ * FILE PURPOSE: Administrator reporting and operational summary page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $admin = require_admin();
@@ -16,46 +25,28 @@ if (!valid_date($from) || !valid_date($to) || $from > $to) {
 $fromAt = $from . " 00:00:00";
 $toAt = $to . " 23:59:59";
 
-$reportQuery = <<<'SQL'
-SELECT
-    b.reference,
-    b.status,
-    b.pickup_at,
-    b.original_return_at,
-    b.return_at,
-    b.total,
-    v.name AS vehicle_name,
-    u.name AS customer_name,
-    COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.booking_id=b.id AND p.status='paid'),0) AS paid_amount,
-    COALESCE((SELECT SUM(r.amount) FROM payment_refunds r WHERE r.booking_id=b.id AND r.status='refunded'),0) AS refunded_amount
-FROM bookings AS b
-JOIN vehicles AS v ON v.id = b.vehicle_id
-JOIN users AS u ON u.id = b.user_id
-WHERE b.created_at BETWEEN ? AND ?
-ORDER BY b.created_at DESC
-SQL;
-
-$statement = database()->prepare($reportQuery);
-$statement->execute([$fromAt, $toAt]);
-$rows = $statement->fetchAll();
-$adjustmentReportStatement = database()->prepare(
-    "SELECT request_type,status,COUNT(*) AS total,COALESCE(SUM(price_difference),0) AS value FROM rental_adjustment_requests WHERE created_at BETWEEN ? AND ? GROUP BY request_type,status"
-);
-$adjustmentReportStatement->execute([$fromAt,$toAt]);
-$adjustmentRows = $adjustmentReportStatement->fetchAll();
-$pendingAdjustments = 0;
-$activatedExtensionValue = 0;
-foreach ($adjustmentRows as $adjustmentRow) {
-    if ($adjustmentRow["status"] === "pending") { $pendingAdjustments += (int)$adjustmentRow["total"]; }
-    if ($adjustmentRow["request_type"] === "extension" && in_array($adjustmentRow["status"],["activated","completed"],true)) { $activatedExtensionValue += (int)$adjustmentRow["value"]; }
-}
-$modificationReport = database()->prepare("SELECT status,COUNT(*) AS total,COALESCE(SUM(price_difference),0) AS value FROM booking_modification_requests WHERE created_at BETWEEN ? AND ? GROUP BY status");
-$modificationReport->execute([$fromAt, $toAt]);
-$pendingModifications = 0;
-foreach ($modificationReport->fetchAll() as $row) { if ($row["status"] === "pending") { $pendingModifications += (int) $row["total"]; } }
-$cancellationCountStatement = database()->prepare("SELECT COUNT(*) FROM booking_cancellation_requests WHERE requested_at BETWEEN ? AND ?");
-$cancellationCountStatement->execute([$fromAt, $toAt]);
-$cancellationCount = (int) $cancellationCountStatement->fetchColumn();
+$report = admin_report_data($from, $to);
+$rows = $report["rows"];
+$adjustmentRows = $report["adjustment_rows"];
+$pendingAdjustments = $report["pending_adjustments"];
+$activatedExtensionValue = $report["activated_extension_value"];
+$pendingModifications = $report["pending_modifications"];
+$cancellationCount = $report["cancellation_count"];
+$statusCounts = $report["status_counts"];
+$bookingValue = $report["booking_value"];
+$verifiedRevenue = $report["verified_revenue"];
+$refundTotal = $report["refund_total"];
+$netRevenue = $report["net_revenue"];
+$finance = $report["finance"];
+$refundByType = $report["refund_by_type"];
+$pendingRefundAmount = $report["pending_refund_amount"];
+$refundSource = $report["refund_source"];
+$settlementFinance = $report["settlement_finance"];
+$securityDepositRefunds = $report["security_deposit_refunds"];
+$depositsHeld = $report["deposits_held"];
+$rentalRevenue = $report["rental_revenue"];
+$topVehicles = $report["top_vehicles"];
+$maxRentals = $report["max_rentals"];
 
 if (($_GET["export"] ?? "") === "csv") {
     $fileName = "rental-report-{$from}-to-{$to}.csv";
@@ -98,90 +89,6 @@ if (($_GET["export"] ?? "") === "csv") {
     exit();
 }
 
-$statusCounts = [];
-$bookingValue = 0;
-$verifiedRevenue = 0;
-$refundTotal = 0;
-
-foreach ($rows as $row) {
-    $status = $row["status"];
-    $statusCounts[$status] = ($statusCounts[$status] ?? 0) + 1;
-    $bookingValue += (int) $row["total"];
-    $verifiedRevenue += (int) $row["paid_amount"];
-    $refundTotal += (int) $row["refunded_amount"];
-}
-$netRevenue = max(0, $verifiedRevenue - $refundTotal);
-
-$financeStatement = database()->prepare(<<<'SQL'
-SELECT
-  COALESCE(SUM(CASE WHEN p.status='paid' THEN p.amount ELSE 0 END),0) AS gross_payments,
-  COALESCE(SUM(CASE WHEN p.status='paid' AND p.payment_type='deposit' THEN p.amount ELSE 0 END),0) AS deposits_collected,
-  COALESCE(SUM(CASE WHEN p.status='paid' AND p.payment_type<>'deposit' THEN p.amount ELSE 0 END),0) AS non_deposit_payments
-FROM payments p
-WHERE p.created_at BETWEEN ? AND ?
-SQL);
-$financeStatement->execute([$fromAt, $toAt]);
-$finance = $financeStatement->fetch() ?: ['gross_payments'=>0,'deposits_collected'=>0,'non_deposit_payments'=>0];
-$refundTypeStatement = database()->prepare(
-    "SELECT r.refund_type, r.status, COALESCE(SUM(r.amount),0) AS amount, COUNT(*) AS total
-     FROM payment_refunds r WHERE r.created_at BETWEEN ? AND ? GROUP BY r.refund_type,r.status"
-);
-$refundTypeStatement->execute([$fromAt, $toAt]);
-$refundByType = ['cancellation'=>0,'payment_correction'=>0,'security_deposit'=>0,'booking_modification'=>0];
-$pendingRefundAmount = 0;
-foreach ($refundTypeStatement->fetchAll() as $refundRow) {
-    if ($refundRow['status'] === 'refunded') {
-        $refundByType[$refundRow['refund_type']] = ($refundByType[$refundRow['refund_type']] ?? 0) + (int) $refundRow['amount'];
-    } elseif (in_array($refundRow['status'], ['pending','approved','processing'], true)) {
-        $pendingRefundAmount += (int) $refundRow['amount'];
-    }
-}
-$refundSourceStatement = database()->prepare(
-    "SELECT
-       COALESCE(SUM(CASE WHEN p.payment_type='deposit' AND r.status='refunded' THEN r.amount ELSE 0 END),0) AS refunded_from_deposits,
-       COALESCE(SUM(CASE WHEN p.payment_type<>'deposit' AND r.status='refunded' THEN r.amount ELSE 0 END),0) AS refunded_from_non_deposits
-     FROM payment_refunds r JOIN payments p ON p.id=r.payment_id
-     WHERE r.created_at BETWEEN ? AND ?"
-);
-$refundSourceStatement->execute([$fromAt, $toAt]);
-$refundSource = $refundSourceStatement->fetch() ?: ['refunded_from_deposits'=>0,'refunded_from_non_deposits'=>0];
-$settlementFinanceStatement = database()->prepare(
-    "SELECT COALESCE(SUM(LEAST(deposit_paid,total_deductions)),0) AS deductions_retained,
-            COALESCE(SUM(outstanding_balance),0) AS outstanding_receivables
-     FROM rental_settlements WHERE finalized_at BETWEEN ? AND ?"
-);
-$settlementFinanceStatement->execute([$fromAt, $toAt]);
-$settlementFinance = $settlementFinanceStatement->fetch() ?: ['deductions_retained'=>0,'outstanding_receivables'=>0];
-$securityDepositRefunds = (int) ($refundByType['security_deposit'] ?? 0);
-$depositsHeld = max(0, (int) $finance['deposits_collected'] - (int) $refundSource['refunded_from_deposits'] - (int) $settlementFinance['deductions_retained']);
-$rentalRevenue = max(0, (int) $finance['non_deposit_payments'] - (int) $refundSource['refunded_from_non_deposits'] + (int) $settlementFinance['deductions_retained']);
-
-$fleetPerformanceQuery = <<<'SQL'
-SELECT
-    v.name,
-    COUNT(b.id) AS rentals,
-    COALESCE(SUM(b.total), 0) AS value
-FROM vehicles AS v
-LEFT JOIN bookings AS b
-    ON b.vehicle_id = v.id
-    AND b.created_at BETWEEN ? AND ?
-GROUP BY v.id
-ORDER BY rentals DESC, value DESC
-LIMIT 8
-SQL;
-
-$topStatement = database()->prepare($fleetPerformanceQuery);
-$topStatement->execute([$fromAt, $toAt]);
-$topVehicles = $topStatement->fetchAll();
-
-$maxRentals = max([
-    1,
-    ...array_map(
-        static fn(array $row): int => (int) $row["rentals"],
-        $topVehicles,
-    ),
-]);
-
 $pageTitle = "Reports | VJ Car Rental";
 
 require dirname(__DIR__, 2) . "/includes/header.php";
@@ -203,8 +110,8 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
             <a
                 class="btn btn-outline-light"
                 href="admin-reports.php?from=<?= urlencode(
-                    $from,
-                ) ?>&amp;to=<?= urlencode($to) ?>&amp;export=csv">
+                                                    $from,
+                                                ) ?>&amp;to=<?= urlencode($to) ?>&amp;export=csv">
                 <i class="bi bi-download" aria-hidden="true"></i>
                 Export CSV
             </a>
@@ -324,8 +231,8 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                         ?>
                         <div class="report-bar">
                             <span><?= escape_html(
-                                ucwords(str_replace("_", " ", $status)),
-                            ) ?></span>
+                                        ucwords(str_replace("_", " ", $status)),
+                                    ) ?></span>
                             <i style="width: <?= $statusWidth ?>%"></i>
                             <strong><?= $count ?></strong>
                         </div>
@@ -382,8 +289,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                     "M j, Y",
                                     strtotime($row["pickup_at"]),
                                 ) ?>
-                                <small>
-                                    to <?= date("M j, Y", strtotime($row["return_at"])) ?>
+                                <small> to <?= date("M j, Y", strtotime($row["return_at"])) ?>
                                     <?php if ($row["original_return_at"] && $row["original_return_at"] !== $row["return_at"]): ?>
                                         · originally <?= date("M j, Y", strtotime($row["original_return_at"])) ?>
                                     <?php endif; ?>
@@ -391,8 +297,8 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             </td>
                             <td>
                                 <span class="status-badge status-badge--<?= status_class(
-                                    $row["status"],
-                                ) ?>">
+                                                                            $row["status"],
+                                                                        ) ?>">
                                     <?= escape_html(humanize_label($row["status"])) ?>
                                 </span>
                             </td>

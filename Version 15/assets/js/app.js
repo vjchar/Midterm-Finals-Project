@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/js/app.js
+ * PURPOSE: Global front-end behavior shared across the site.
+ * USAGE: Handles navigation state, general UI interactions, accessibility behavior, and other application-wide browser interactions.
+ * Maintenance: keep this script focused on the browser behavior described above.
+ */
+
 "use strict";
 
 document.documentElement.classList.add("js-enabled");

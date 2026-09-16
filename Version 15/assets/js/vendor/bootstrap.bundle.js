@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/js/vendor/bootstrap.bundle.js
+ * PURPOSE: Vendored Bootstrap JavaScript bundle.
+ * USAGE: Provides Bootstrap components such as modals, dropdowns, collapse, tooltips, and related UI behavior. Avoid editing vendor logic unless replacing the vendor version intentionally.
+ * Maintenance: keep this script focused on the browser behavior described above.
+ */
+
 /*!
   * Bootstrap v5.3.8 (https://getbootstrap.com/)
   * Copyright 2011-2025 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)

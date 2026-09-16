@@ -1,5 +1,12 @@
 /*
- * VJ Car Rental final presentation layer
+ * FILE: assets/css/components.css
+ * PURPOSE: Shared component and page-surface styling.
+ * USAGE: Adds targeted spacing, alignment, component, and presentation refinements that build on the base stylesheet.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
+/*
+ * VJ Car Rental component presentation layer
  *
  * This file intentionally loads after Bootstrap, Tailwind, style.css, and
  * operations.css. It normalizes typography, spacing, responsive behavior,
@@ -1499,7 +1506,7 @@ body.is-admin-context main > .admin-page-heading p {
   }
 }
 
-/* Final cross-page design corrections */
+/* Cross-page component corrections */
 .included-card--expanded,
 .included-card--expanded span {
   color: var(--navy);
@@ -1746,7 +1753,7 @@ body.is-admin-context main > .admin-page-heading p {
   }
 }
 
-/* Precision layout corrections from the final visual review */
+/* Precision layout corrections */
 body {
   display: flex;
   min-height: 100dvh;

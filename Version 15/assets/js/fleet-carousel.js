@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/js/fleet-carousel.js
+ * PURPOSE: Fleet carousel/slider behavior.
+ * USAGE: Controls vehicle carousel navigation and responsive interaction on pages that show horizontally browsable fleet content.
+ * Maintenance: keep this script focused on the browser behavior described above.
+ */
+
 "use strict";
 
 document.addEventListener("DOMContentLoaded", function () {

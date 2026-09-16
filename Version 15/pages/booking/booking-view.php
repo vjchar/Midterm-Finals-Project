@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/booking-view.php
+ * FILE PURPOSE: Detailed customer view of a single booking.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $user = require_customer();
 $reference = trim((string) ($_GET["reference"] ?? ($_POST["reference"] ?? "")));
@@ -24,11 +33,7 @@ if (!$booking || (int) $booking["user_id"] !== (int) $user["id"]) {
     exit();
 }
 $errors = [];
-$reviewCheck = database()->prepare(
-    "SELECT id, status FROM reviews WHERE booking_id = ? LIMIT 1",
-);
-$reviewCheck->execute([$booking["id"]]);
-$review = $reviewCheck->fetch();
+$review = review_for_booking((int) $booking["id"]);
 $requirements = booking_requirements($booking);
 $paymentSummary = $requirements["payments"];
 $inspections = inspections_for_booking((int) $booking["id"]);

@@ -1,1 +1,4 @@
+# FILE: storage/reviews/.gitkeep
+# PURPOSE: Directory placeholder tracked by Git.
+# USAGE: Keeps the empty storage/reviews directory present in the repository until runtime files are created there.
 

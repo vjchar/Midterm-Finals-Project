@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/rental-adjustment.php
+ * FILE PURPOSE: Customer rental extension/adjustment request page.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . '/includes/bootstrap.php';
 $user = require_customer();
 $reference = trim((string)($_GET['reference'] ?? ($_POST['reference'] ?? '')));
@@ -94,7 +103,7 @@ require dirname(__DIR__, 2) . '/includes/header.php';
                 <article class="operation-card rental-adjustment-card">
                     <span class="section-kicker">Keep it longer</span>
                     <h2>Request Extension</h2>
-                    <p>The server checks the same vehicle against future reservations and maintenance, then recalculates the rental using the existing VJ Car Rental pricing rules.</p>
+                    <p>We check the vehicle against upcoming reservations and maintenance, then recalculate the rental using the current pricing rules.</p>
                     <form method="post" class="row g-3">
                         <?= csrf_field() ?>
                         <input type="hidden" name="reference" value="<?= escape_html($booking['reference']) ?>">

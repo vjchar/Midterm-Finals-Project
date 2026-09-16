@@ -1,6 +1,15 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * FILE: actions/secure-file.php
+ * FILE PURPOSE: Protected endpoint for serving private uploaded files.
+ * USED BY: Customer/admin document and payment-proof views.
+ * RESPONSIBILITY: Authorizes the requester, resolves the requested private file through services, and streams it without exposing storage directly.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__) . "/includes/bootstrap.php";
 $user = require_auth();
 $type = trim((string) ($_GET["type"] ?? ""));
@@ -11,9 +20,7 @@ if (!$id || !in_array($type, ["document", "payment"], true)) {
     exit("File not found.");
 }
 if ($type === "document") {
-    $statement = database()->prepare(
-        "SELECT user_id, filename FROM customer_documents WHERE id = ? LIMIT 1",
-    );
+    $record = document_file_record((int) $id);
     $directory =
         ROOT .
         DIRECTORY_SEPARATOR .
@@ -21,9 +28,7 @@ if ($type === "document") {
         DIRECTORY_SEPARATOR .
         "documents";
 } else {
-    $statement = database()->prepare(
-        "SELECT user_id, proof_filename AS filename FROM payments WHERE id = ? LIMIT 1",
-    );
+    $record = payment_proof_record((int) $id);
     $directory =
         ROOT .
         DIRECTORY_SEPARATOR .
@@ -31,9 +36,6 @@ if ($type === "document") {
         DIRECTORY_SEPARATOR .
         "payment-proofs";
 }
-
-$statement->execute([$id]);
-$record = $statement->fetch();
 
 $isOwner = $record && (int) $record["user_id"] === (int) $user["id"];
 $isAdmin = $user["role"] === "admin";

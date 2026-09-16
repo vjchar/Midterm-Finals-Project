@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: index.php
+ * FILE PURPOSE: Public landing page and main entry point for VJ Car Rental.
+ * USED BY: Visitors opening the application root URL.
+ * RESPONSIBILITY: Loads the application and renders the homepage content and featured rental experience.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require_once __DIR__ . "/includes/bootstrap.php";
 
 $vehicles = vehicle_all();
@@ -61,7 +70,7 @@ foreach (["Luxury", "SUV", "Pickup", "Van", "EV"] as $vehicleCategory) {
                 <h1 aria-label="Your Journey Starts Here. Drive More. Worry Less.">Your Journey<br>Starts Here.<br>
                     <span>Drive More.<br>Worry Less.</span>
                 </h1>
-                <p class="hero-lead">Rent the perfect car for any occasion. <br>Fast booking, transparent pricing, <br>and trusted by thousands.</p>
+                <p class="hero-lead">Choose the right car for your trip. <br>Fast booking, clear pricing, <br>and dependable support.</p>
                 <div class="d-flex flex-wrap gap-3 hero-actions">
                     <a class="btn btn-primary" href="booking.php">Book a Car</a>
                     <a class="btn btn-outline" href="vehicles.php">View Vehicles</a>
@@ -70,8 +79,8 @@ foreach (["Luxury", "SUV", "Pickup", "Van", "EV"] as $vehicleCategory) {
                     <div>
                         <i class="bi bi-shield-check"></i>
                         <span>
-                            <strong>Best Prices</strong>
-                            <small>Guaranteed</small>
+                            <strong>Clear Pricing</strong>
+                            <small>Up-front rates</small>
                         </span>
                     </div>
                     <div>
@@ -84,7 +93,7 @@ foreach (["Luxury", "SUV", "Pickup", "Van", "EV"] as $vehicleCategory) {
                     <div>
                         <i class="bi bi-headset"></i>
                         <span>
-                            <strong>24/7 Customer</strong>
+                            <strong>Daily Customer</strong>
                             <small>Support</small>
                         </span>
                     </div>
@@ -191,15 +200,15 @@ foreach (["Luxury", "SUV", "Pickup", "Van", "EV"] as $vehicleCategory) {
             <div>
                 <i class="bi bi-currency-dollar"></i>
                 <span>
-                    <small>No Hidden Fees</small>
-                    <strong>Transparent pricing<br>with no surprises.</strong>
+                    <small>Clear Pricing</small>
+                    <strong>Review your total<br>before confirmation.</strong>
                 </span>
             </div>
             <div>
                 <i class="bi bi-people-fill"></i>
                 <span>
-                    <small>Trusted by Thousands</small>
-                    <strong>Join satisfied customers<br>nationwide.</strong>
+                    <small>Local Support</small>
+                    <strong>Help from booking<br>through vehicle return.</strong>
                 </span>
             </div>
         </div>

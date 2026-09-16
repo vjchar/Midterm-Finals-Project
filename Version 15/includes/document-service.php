@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/document-service.php
+ * FILE PURPOSE: Customer document and protected-document service.
+ * USED BY: Account document pages, admin document review, and secure-file delivery.
+ * RESPONSIBILITY: Handles document listing, upload metadata, verification workflow, and authorized lookup of protected customer documents.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Return a customer's submitted rental documents keyed by document type.
  *
@@ -174,4 +183,40 @@ function review_customer_document(
         "customer_document",
         $documentId,
     );
+}
+
+/****************************************************************************
+ * ADMIN DOCUMENT LISTS AND SECURE LOOKUP
+ ****************************************************************************/
+
+/** Return customer documents for the administration verification queue. */
+function admin_documents(string $status = "all"): array
+{
+    $sql =
+        "SELECT d.*, u.name AS customer_name, u.email AS customer_email,
+                verifier.name AS verifier_name
+         FROM customer_documents d
+         JOIN users u ON u.id = d.user_id
+         LEFT JOIN users verifier ON verifier.id = d.verified_by";
+    $parameters = [];
+    if ($status !== "all") {
+        $sql .= " WHERE d.status = ?";
+        $parameters[] = $status;
+    }
+    $sql .=
+        " ORDER BY CASE d.status WHEN 'pending' THEN 0 ELSE 1 END, d.updated_at DESC";
+    $statement = database()->prepare($sql);
+    $statement->execute($parameters);
+    return $statement->fetchAll();
+}
+
+/** Return ownership and filename information for a stored customer document. */
+function document_file_record(int $documentId): ?array
+{
+    $statement = database()->prepare(
+        "SELECT user_id, filename FROM customer_documents WHERE id = ? LIMIT 1",
+    );
+    $statement->execute([$documentId]);
+    $record = $statement->fetch();
+    return $record ?: null;
 }

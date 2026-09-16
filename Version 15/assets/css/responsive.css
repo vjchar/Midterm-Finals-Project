@@ -1,15 +1,22 @@
 /*
- * Final responsive layout layer
+ * FILE: assets/css/responsive.css
+ * PURPOSE: Responsive layout rules for desktop, tablet, and mobile screens.
+ * USAGE: Contains media queries and responsive corrections for desktop, tablet, and mobile screen sizes.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
+/*
+ * Responsive layout layer
  * --------------------------------------------------------------------------
  * This file intentionally loads last. It corrects spacing and responsive
  * behavior without hiding the original brand styles in compressed CSS.
  */
 
 :root {
-  --final-content-width: 1320px;
-  --final-readable-width: 760px;
-  --final-control-height: 48px;
-  --final-card-radius: 18px;
+  --layout-content-width: 1320px;
+  --layout-readable-width: 760px;
+  --layout-control-height: 48px;
+  --layout-card-radius: 18px;
 }
 
 html {
@@ -38,8 +45,8 @@ main {
 }
 
 .container {
-  width: min(100% - (2 * var(--page-gutter)), var(--final-content-width));
-  max-width: var(--final-content-width);
+  width: min(100% - (2 * var(--page-gutter)), var(--layout-content-width));
+  max-width: var(--layout-content-width);
   margin-inline: auto;
 }
 
@@ -94,7 +101,7 @@ p {
 
 .form-control,
 .form-select {
-  min-height: var(--final-control-height);
+  min-height: var(--layout-control-height);
   padding: 0.7rem 0.85rem;
   border-radius: 10px;
   line-height: 1.35;
@@ -142,11 +149,11 @@ textarea.form-control {
   border-right-color: transparent;
   border-radius: 50%;
   content: "";
-  animation: final-button-spinner 650ms linear infinite;
+  animation: button-spinner 650ms linear infinite;
   vertical-align: -0.1rem;
 }
 
-@keyframes final-button-spinner {
+@keyframes button-spinner {
   to {
     transform: rotate(360deg);
   }
@@ -332,7 +339,7 @@ textarea.form-control {
 
 .admin-page-heading p,
 .admin-dashboard-hero p {
-  max-width: var(--final-readable-width);
+  max-width: var(--layout-readable-width);
 }
 
 .admin-stats,

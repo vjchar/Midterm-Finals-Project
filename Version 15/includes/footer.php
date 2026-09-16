@@ -1,3 +1,10 @@
+<!--
+  FILE: includes/footer.php
+  FILE PURPOSE: Shared site footer and closing document markup.
+  USED BY: Pages that use the standard site layout.
+  RESPONSIBILITY: Renders common footer content, JavaScript includes, and closing HTML tags.
+  Maintenance note: Keep this file focused on the responsibility described above.
+-->
 </main>
 
 <?php
@@ -121,7 +128,7 @@ $isAdminPage =
             <span>&copy; <?= date(
                 "Y",
             ) ?> VJ Car Rental. All rights reserved.</span>
-            <span>VJ Car Rental — Version 15 · Final Polished Production-Quality Build</span>
+            <span>VJ Car Rental — Version 15</span>
         </div>
     </div>
 </footer>

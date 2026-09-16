@@ -1,6 +1,15 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * FILE: includes/admin-nav.php
+ * FILE PURPOSE: Shared administrator navigation component.
+ * USED BY: Admin dashboard and admin management pages.
+ * RESPONSIBILITY: Renders the consistent admin navigation/sidebar and highlights the active administration section.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $adminPage = basename($_SERVER["PHP_SELF"] ?? "admin.php");
 $adminLinks = [
     "admin.php" => ["Dashboard", "bi-speedometer2"],

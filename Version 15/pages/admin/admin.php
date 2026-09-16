@@ -2,86 +2,24 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin.php
+ * FILE PURPOSE: Administrator dashboard landing page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $admin = require_admin();
-$database = database();
-
-$countQueries = [
-    "vehicles" => "SELECT COUNT(*) FROM vehicles WHERE is_active = 1",
-    "bookings" =>
-        "SELECT COUNT(*) FROM bookings WHERE status IN ('pending', 'confirmed', 'ready', 'active', 'returned')",
-    "customers" =>
-        "SELECT COUNT(*) FROM users WHERE role = 'customer' AND status = 'active'",
-    "pending_documents" =>
-        "SELECT COUNT(*) FROM customer_documents WHERE status = 'pending'",
-    "pending_payments" =>
-        "SELECT COUNT(*) FROM payments WHERE status = 'pending'",
-    "active_rentals" => "SELECT COUNT(*) FROM bookings WHERE status = 'active'",
-    "pending_adjustments" => "SELECT COUNT(*) FROM rental_adjustment_requests WHERE status = 'pending'",
-    "pending_modifications" => "SELECT COUNT(*) FROM booking_modification_requests WHERE status = 'pending'",
-    "pending_cancellations" => "SELECT COUNT(*) FROM booking_cancellation_requests WHERE status = 'pending'",
-    "pending_refunds" => "SELECT COUNT(*) FROM payment_refunds WHERE status IN ('pending','approved','processing')",
-    "pending_settlements" => "SELECT COUNT(*) FROM bookings b LEFT JOIN rental_settlements s ON s.booking_id=b.id WHERE b.status='returned' AND (s.id IS NULL OR s.status <> 'settled')",
-    "revenue" =>
-        "SELECT GREATEST(0, COALESCE((SELECT SUM(amount) FROM payments WHERE status = 'paid'),0) - COALESCE((SELECT SUM(amount) FROM payment_refunds WHERE status = 'refunded'),0))",
-];
-
-$counts = [];
-
-foreach ($countQueries as $key => $query) {
-    $counts[$key] = (int) $database->query($query)->fetchColumn();
-}
-
-$recentBookings = $database
-    ->query(
-        "SELECT
-            b.reference,
-            b.status,
-            b.total,
-            b.pickup_at,
-            v.name AS vehicle_name,
-            u.name AS customer_name
-        FROM bookings b
-        JOIN vehicles v ON v.id = b.vehicle_id
-        JOIN users u ON u.id = b.user_id
-        ORDER BY b.created_at DESC
-        LIMIT 8",
-    )
-    ->fetchAll();
-
-$statusRows = $database
-    ->query(
-        "SELECT status, COUNT(*) AS total
-        FROM bookings
-        GROUP BY status
-        ORDER BY total DESC",
-    )
-    ->fetchAll();
-
-$upcomingReturns = $database
-    ->query(
-        "SELECT
-            b.reference,
-            b.return_at,
-            v.name AS vehicle_name,
-            u.name AS customer_name
-        FROM bookings b
-        JOIN vehicles v ON v.id = b.vehicle_id
-        JOIN users u ON u.id = b.user_id
-        WHERE b.status = 'active'
-        ORDER BY b.return_at
-        LIMIT 6",
-    )
-    ->fetchAll();
-
-$statusMaximum = max([
-    1,
-    ...array_map(
-        static fn(array $row): int => (int) $row["total"],
-        $statusRows,
-    ),
-]);
+$dashboard = admin_dashboard_data();
+$counts = $dashboard["counts"];
+$recentBookings = $dashboard["recent_bookings"];
+$statusRows = $dashboard["status_rows"];
+$upcomingReturns = $dashboard["upcoming_returns"];
+$statusMaximum = $dashboard["status_maximum"];
 
 $currentHour = (int) date("G");
 $greeting = match (true) {

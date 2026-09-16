@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-documents.php
+ * FILE PURPOSE: Administrator customer-document review and verification page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $errors = [];
@@ -31,22 +40,7 @@ $status = trim((string) ($_GET["status"] ?? "all"));
 if (!in_array($status, ["all", "pending", "approved", "rejected"], true)) {
     $status = "all";
 }
-$sql =
-    "SELECT d.*, u.name AS customer_name, u.email AS customer_email,
-            verifier.name AS verifier_name
-     FROM customer_documents d
-     JOIN users u ON u.id = d.user_id
-     LEFT JOIN users verifier ON verifier.id = d.verified_by";
-$params = [];
-if ($status !== "all") {
-    $sql .= " WHERE d.status = ?";
-    $params[] = $status;
-}
-$sql .=
-    ' ORDER BY CASE d.status WHEN \'pending\' THEN 0 ELSE 1 END, d.updated_at DESC';
-$statement = database()->prepare($sql);
-$statement->execute($params);
-$documents = $statement->fetchAll();
+$documents = admin_documents($status);
 $pageTitle = "Document Verification | VJ Car Rental";
 require dirname(__DIR__, 2) . "/includes/header.php";
 require dirname(__DIR__, 2) . "/includes/admin-nav.php";

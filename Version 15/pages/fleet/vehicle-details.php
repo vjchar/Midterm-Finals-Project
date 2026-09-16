@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/fleet/vehicle-details.php
+ * FILE PURPOSE: Detailed vehicle information, availability, rating, and booking-entry page.
+ * USED BY: Visitors/customers browsing and evaluating the vehicle fleet.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $vehicles = vehicle_all();
@@ -41,12 +50,8 @@ $relatedVehicles = array_slice(
     3,
 );
 
-$approvedReviews = approved_reviews_for_vehicle($selectedVehicle["id"]);
-$averagesStatement = database()->prepare(
-    "SELECT AVG(cleanliness) AS cleanliness, AVG(comfort) AS comfort, AVG(vehicle_condition) AS vehicle_condition, AVG(pickup_experience) AS pickup_experience, AVG(customer_support) AS customer_support FROM reviews WHERE vehicle_id = ? AND status = 'approved'",
-);
-$averagesStatement->execute([$selectedVehicle["id"]]);
-$ratingAverages = $averagesStatement->fetch() ?: [];
+$approvedReviews = approved_reviews_for_vehicle((int) $selectedVehicle["id"]);
+$ratingAverages = vehicle_rating_averages((int) $selectedVehicle["id"]);
 $isSelectedVehicleFavorite = in_array(
     $selectedVehicle["slug"],
     $authenticatedUserFavoriteSlugs,
@@ -364,7 +369,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                         $selectedVehicle["slug"],
                     ) ?>">Compare This Vehicle</a>
                     <small class="display-note">
-                        <i class="bi bi-shield-check"></i> Pricing and date conflicts are verified by the server before saving.</small>
+                        <i class="bi bi-shield-check"></i> Pricing and availability are verified before the booking is saved.</small>
                 </aside>
             </div>
         </div>

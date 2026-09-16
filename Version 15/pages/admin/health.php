@@ -2,10 +2,19 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/health.php
+ * FILE PURPOSE: Administrator system/database health and diagnostics page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
-$driver = database()->getAttribute(PDO::ATTR_DRIVER_NAME);
-$databaseName = (string) database()->query("SELECT DATABASE()")->fetchColumn();
+$driver = database_driver_name();
+$databaseName = connected_database_name();
 $checks = [
     [
         "PHP version",
@@ -99,7 +108,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
             <?php endforeach; ?>
         </div>
         <div class="booking-note mt-4">
-            <strong>Before public launch:</strong> run these checks under the real domain, configure HTTPS and mail delivery, use a dedicated least-privilege database account, and complete the legal business information in Terms and Privacy.
+            <strong>System check:</strong> review any failed items before using the application for live operations.
         </div>
     </div>
 </section>

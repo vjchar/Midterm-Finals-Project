@@ -1,21 +1,22 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * FILE: actions/review-photo.php
+ * FILE PURPOSE: Protected endpoint for serving customer review photos.
+ * USED BY: Review displays that need an uploaded review image.
+ * RESPONSIBILITY: Checks access/request data and delegates review-photo lookup before streaming the image safely.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__) . "/includes/bootstrap.php";
 $photoId = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if (!$photoId) {
     http_response_code(404);
     exit();
 }
-$sql =
-    "SELECT rp.filename FROM review_photos rp JOIN reviews r ON r.id = rp.review_id WHERE rp.id = ?";
-if (!admin()) {
-    $sql .= " AND r.status = 'approved'";
-}
-
-$statement = database()->prepare($sql . " LIMIT 1");
-$statement->execute([$photoId]);
-$filename = $statement->fetchColumn();
+$filename = review_photo_filename((int) $photoId, admin());
 $path = $filename
     ? ROOT . "/storage/reviews/" . basename((string) $filename)
     : "";

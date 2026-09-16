@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/rental-service.php
+ * FILE PURPOSE: Rental lifecycle and operations service.
+ * USED BY: Admin rental pages, rental adjustment pages, checkout/check-in flows, and reports.
+ * RESPONSIBILITY: Handles rental states, checkout/check-in, adjustments, extensions, calendar data, queues, and settlement operations.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Rental lifecycle, checkout/check-in, adjustments, calendar, and settlement workflows.
  */
@@ -1153,4 +1162,52 @@ function refresh_rental_settlement_status(int $bookingId): void
         $status = 'settled';
     }
     database()->prepare('UPDATE rental_settlements SET status=?, updated_at=? WHERE id=?')->execute([$status, date('Y-m-d H:i:s'), (int) $settlement['id']]);
+}
+
+/****************************************************************************
+ * ADMIN RENTAL QUEUES
+ ****************************************************************************/
+
+/** Return the active rental desk queue. */
+function admin_rentals(): array
+{
+    $query = <<<'SQL'
+SELECT
+    b.reference,
+    b.status,
+    b.pickup_at,
+    b.return_at,
+    v.name AS vehicle_name,
+    v.availability_status,
+    u.name AS customer_name
+FROM bookings AS b
+JOIN vehicles AS v ON v.id = b.vehicle_id
+JOIN users AS u ON u.id = b.user_id
+WHERE b.status IN ('ready', 'active', 'returned')
+ORDER BY
+    CASE b.status
+        WHEN 'active' THEN 0
+        WHEN 'ready' THEN 1
+        ELSE 2
+    END,
+    b.pickup_at
+SQL;
+    return database()->query($query)->fetchAll();
+}
+
+/** Return rental adjustment requests that still require operational attention. */
+function admin_rental_adjustments(): array
+{
+    return database()
+        ->query(
+            "SELECT r.*, b.reference, b.return_at AS current_return_at, b.status AS booking_status,
+                    v.name AS vehicle_name, u.name AS customer_name
+             FROM rental_adjustment_requests r
+             JOIN bookings b ON b.id = r.booking_id
+             JOIN vehicles v ON v.id = b.vehicle_id
+             JOIN users u ON u.id = r.user_id
+             WHERE r.status IN ('pending','approved')
+             ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END, r.created_at",
+        )
+        ->fetchAll();
 }

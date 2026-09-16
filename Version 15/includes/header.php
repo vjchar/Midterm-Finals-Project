@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/header.php
+ * FILE PURPOSE: Shared HTML document header and site navigation.
+ * USED BY: Most public, customer, booking, and company pages.
+ * RESPONSIBILITY: Builds the common page head, CSS includes, navigation, flash messages, and opening layout markup.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require_once __DIR__ . "/bootstrap.php";
 
 $pageTitle = $pageTitle ?? "VJ Car Rental";
@@ -86,10 +95,10 @@ if ($currentUser) {
     <link href="assets/css/tailwind.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/operations.css" rel="stylesheet">
-    <link href="assets/css/design-polish.css" rel="stylesheet">
+    <link href="assets/css/components.css" rel="stylesheet">
     <link href="assets/css/vehicle-images.css?v=20260914-15" rel="stylesheet">
-    <link href="assets/css/responsive-final.css" rel="stylesheet">
-    <link href="assets/css/v15-polish.css?v=20260914-1" rel="stylesheet">
+    <link href="assets/css/responsive.css" rel="stylesheet">
+    <link href="assets/css/ui.css?v=20260916-1" rel="stylesheet">
 </head>
 
 <body
@@ -189,7 +198,7 @@ if ($currentUser) {
             <div class="setup-notice">
                 <div class="container">
                     <i class="bi bi-shield-lock" aria-hidden="true"></i>
-                    <span>First-time setup is required before launch.</span>
+                    <span>Administrator setup is required.</span>
                     <a href="setup.php">Create administrator</a>
                 </div>
             </div>

@@ -1,3 +1,8 @@
+<!--
+  FILE: assets/images/placeholders/vehicle-placeholder.svg
+  PURPOSE: Fallback vehicle image used when a vehicle-specific image is unavailable.
+  USAGE: Displayed by fleet/card/detail UI so broken or missing vehicle images have a consistent visual replacement.
+-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-labelledby="title description">
   <title id="title">Vehicle image placeholder</title>
   <desc id="description">A simple branded vehicle silhouette used while a vehicle photo is unavailable.</desc>

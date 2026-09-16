@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-bookings.php
+ * FILE PURPOSE: Administrator booking search, review, and management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $allowedTransitions = booking_transitions();
@@ -54,17 +63,7 @@ $validFilters = array_merge(["all"], booking_statuses());
 if (!in_array($statusFilter, $validFilters, true)) {
     $statusFilter = "all";
 }
-$sql =
-    "SELECT b.*, v.name AS vehicle_name, u.name AS customer_name, u.email AS customer_email FROM bookings b JOIN vehicles v ON v.id=b.vehicle_id JOIN users u ON u.id=b.user_id";
-$params = [];
-if ($statusFilter !== "all") {
-    $sql .= " WHERE b.status = ?";
-    $params[] = $statusFilter;
-}
-$sql .= " ORDER BY b.created_at DESC";
-$statement = database()->prepare($sql);
-$statement->execute($params);
-$bookings = $statement->fetchAll();
+$bookings = admin_bookings($statusFilter);
 $selected = isset($_GET["reference"])
     ? booking_find_by_reference((string) $_GET["reference"])
     : null;

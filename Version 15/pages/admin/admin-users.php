@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-users.php
+ * FILE PURPOSE: Administrator customer/admin access and user-account management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $errors = [];
@@ -12,62 +21,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $userId = (int) post_string("user_id");
         $role = post_string("role");
         $status = post_string("status");
-        if (
-            !in_array($role, ["customer", "admin"], true) ||
-            !in_array($status, ["active", "inactive"], true)
-        ) {
-            throw new InvalidArgumentException(
-                "Choose a valid role and account status.",
-            );
-        }
-        $statement = database()->prepare(
-            'SELECT id, name, email, role, status FROM users WHERE id = ? LIMIT 1',
-        );
-        $statement->execute([$userId]);
-        $target = $statement->fetch();
-        if (!$target) {
-            throw new RuntimeException("User account not found.");
-        }
-        if (
-            $userId === (int) $admin["id"] &&
-            ($role !== "admin" || $status !== "active")
-        ) {
-            throw new RuntimeException(
-                "You cannot remove or deactivate your own administrator access.",
-            );
-        }
-        if (
-            $target["role"] === "admin" &&
-            ($role !== "admin" || $status !== "active")
-        ) {
-            $activeAdmins = (int) database()
-                ->query(
-                    "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'",
-                )
-                ->fetchColumn();
-            if ($activeAdmins <= 1) {
-                throw new RuntimeException(
-                    "At least one active administrator must remain.",
-                );
-            }
-        }
-        $update = database()->prepare(
-            "UPDATE users SET role = ?, status = ?, updated_at = ? WHERE id = ?",
-        );
-        $update->execute([
+        $name = admin_update_user_access(
+            (int) $admin["id"],
+            $userId,
             $role,
             $status,
-            date("Y-m-d H:i:s"),
-            $userId,
-        ]);
-        write_audit("user_access_updated", "user", $userId, [
-            "role" => $role,
-            "status" => $status,
-        ]);
-        flash(
-            "success",
-            "Account access updated for " . $target["name"] . ".",
         );
+        flash("success", "Account access updated for " . $name . ".");
         redirect("admin-users.php");
     } catch (Throwable $error) {
         $errors[] = user_facing_error_message($error);
@@ -75,19 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 $query = trim((string) ($_GET["q"] ?? ""));
-$sql = "SELECT u.*, COALESCE(bc.booking_count, 0) AS booking_count
-        FROM users u
-        LEFT JOIN (SELECT user_id, COUNT(*) AS booking_count FROM bookings GROUP BY user_id) bc ON bc.user_id = u.id";
-$parameters = [];
-if ($query !== "") {
-    $sql .=
-        " WHERE LOWER(u.name) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?)";
-    $parameters = ["%" . $query . "%", "%" . $query . "%"];
-}
-$sql .= " ORDER BY u.created_at DESC";
-$statement = database()->prepare($sql);
-$statement->execute($parameters);
-$users = $statement->fetchAll();
+$users = admin_users($query);
 $pageTitle = "Manage Users | VJ Car Rental";
 require dirname(__DIR__, 2) . "/includes/header.php";
 require dirname(__DIR__, 2) . "/includes/admin-nav.php";

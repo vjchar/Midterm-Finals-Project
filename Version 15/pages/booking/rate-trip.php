@@ -2,17 +2,18 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/rate-trip.php
+ * FILE PURPOSE: Completed-trip rating and customer review submission page.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $user = require_customer();
-$eligibleStatement = database()
-    ->prepare("SELECT b.reference, b.id, b.vehicle_id, v.name AS vehicle_name, v.slug AS vehicle_slug, v.image AS vehicle_image, v.description AS vehicle_description
-    FROM bookings b
-    JOIN vehicles v ON v.id = b.vehicle_id
-    JOIN rental_settlements s ON s.booking_id = b.id AND s.status = 'settled'
-    LEFT JOIN reviews r ON r.booking_id = b.id
-    WHERE b.user_id = ? AND b.status = 'completed' AND r.id IS NULL ORDER BY b.completed_at DESC, b.updated_at DESC");
-$eligibleStatement->execute([$user["id"]]);
-$eligible = $eligibleStatement->fetchAll();
+$eligible = reviewable_bookings_for_user((int) $user["id"]);
 $reference = trim(
     (string) ($_GET["reference"] ??
         ($_POST["reference"] ?? ($eligible[0]["reference"] ?? ""))),
@@ -21,11 +22,11 @@ $booking = null;
 foreach ($eligible as $candidate) {
     if ($candidate["reference"] === $reference) {
         $booking = $candidate;
+        break;
     }
 }
 $errors = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $savedFiles = [];
     try {
         require_csrf();
         if (!$booking) {
@@ -33,6 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "This completed booking is not eligible for another review.",
             );
         }
+
         $scores = [];
         foreach (
             [
@@ -42,8 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "vehicle_condition",
                 "pickup_experience",
                 "customer_support",
-            ]
-            as $field
+            ] as $field
         ) {
             $scores[$field] = filter_var(
                 $_POST[$field] ?? null,
@@ -56,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
         }
+
         $title = post_string("title");
         $body = post_string("body");
         if (mb_strlen($title) < 5 || mb_strlen($title) > 160) {
@@ -73,6 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "Confirm that the review describes your own rental.",
             );
         }
+
         $files = [];
         if (
             isset($_FILES["photos"]["name"]) &&
@@ -96,56 +99,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 "Upload no more than three review photos.",
             );
         }
-        database()->beginTransaction();
-        $currentTimestamp = date("Y-m-d H:i:s");
-        $insert = database()->prepare(
-            "INSERT INTO reviews (booking_id, user_id, vehicle_id, overall, cleanliness, comfort, vehicle_condition, pickup_experience, customer_support, title, body, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        );
-        $insert->execute([
-            $booking["id"],
-            $user["id"],
-            $booking["vehicle_id"],
-            $scores["overall"],
-            $scores["cleanliness"],
-            $scores["comfort"],
-            $scores["vehicle_condition"],
-            $scores["pickup_experience"],
-            $scores["customer_support"],
+
+        submit_vehicle_review(
+            $booking,
+            (int) $user["id"],
+            $scores,
             $title,
             $body,
-            "pending",
-            $currentTimestamp,
-            $currentTimestamp,
-        ]);
-        $reviewId = (int) database()->lastInsertId();
-        foreach ($files as $file) {
-            $filename = upload_file(
-                $file,
-                ROOT . "/storage/reviews",
-                [
-                    "image/jpeg" => "jpg",
-                    "image/png" => "png",
-                    "image/webp" => "webp",
-                ],
-                3 * 1024 * 1024,
-                "review-" . $reviewId,
-            );
-            $savedFiles[] = $filename;
-            $photo = database()->prepare(
-                "INSERT INTO review_photos (review_id, filename, created_at) VALUES (?, ?, ?)",
-            );
-            $photo->execute([$reviewId, $filename, $currentTimestamp]);
-        }
-        database()->commit();
-        notify_admins(
-            "Review awaiting moderation",
-            "A verified-trip review for booking " . $booking["reference"] . " is ready for moderation.",
-            "review",
-            (int) $booking["id"],
+            $files,
         );
-        write_audit("review_submitted", "review", $reviewId, [
-            "booking_id" => (int) $booking["id"],
-        ]);
         flash(
             "success",
             "Thank you. Your verified-trip review is awaiting moderation.",
@@ -154,15 +116,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "booking-view.php?reference=" . urlencode($booking["reference"]),
         );
     } catch (Throwable $error) {
-        if (database()->inTransaction()) {
-            database()->rollBack();
-        }
-        foreach ($savedFiles as $filename) {
-            $path = ROOT . "/storage/reviews/" . basename($filename);
-            if (is_file($path)) {
-                unlink($path);
-            }
-        }
         $errors[] = user_facing_error_message($error);
     }
 }
@@ -306,7 +259,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             <i class="bi bi-patch-check-fill"></i>
                             <div>
                                 <strong>Verified rental</strong>
-                                <p>Booking ownership, completed status, and the one-review limit are checked by the server.</p>
+                                <p>Only completed bookings can be reviewed, and each booking can be reviewed once.</p>
                             </div>
                         </div>
                     </aside>

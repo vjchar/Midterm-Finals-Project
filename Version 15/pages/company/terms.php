@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/terms.php
+ * FILE PURPOSE: Public terms and conditions page.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $pageTitle = "Terms & Conditions | VJ Car Rental";
 $pageDescription =
-    "Review the presentation-only rental terms and conditions page for VJ Car Rental.";
+    "Review the rental terms and conditions for VJ Car Rental.";
 require dirname(__DIR__, 2) . "/includes/header.php";
 ?>
 
@@ -34,7 +43,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <article class="col-lg-9 legal-copy">
                 <div class="legal-notice">
                     <i class="bi bi-info-circle"></i>
-                    <p>These application terms support the booking workflow but do not replace the signed vehicle rental agreement. The operator must complete its legal business details, fees, insurance terms, cancellation windows, and governing-law clauses before public launch and obtain appropriate legal review.</p>
+                    <p>These terms apply to reservations made through VJ Car Rental and work together with the signed vehicle rental agreement provided at handover.</p>
                 </div>
                 <section id="agreement">
                     <span>01</span>
@@ -95,12 +104,13 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             </article>
         </div>
     </div>
+</section>
 <section class="content-section pt-0">
     <div class="container">
         <article class="operation-card">
             <span class="section-kicker">Cancellation policy</span>
             <h2>Cancellation and recorded refunds</h2>
-            <p>Under the current configurable school-project policy, verified payments are fully refundable when an eligible cancellation is approved more than <?= CANCELLATION_REFUND_CUTOFF_HOURS ?> hours before the scheduled pickup. Requests submitted inside that window can still be reviewed by an administrator, but no automatic refund is due under the standard policy. Every refund remains linked to its original verified payment and is shown in the booking invoice/history.</p>
+            <p>Under the current cancellation policy, verified payments are fully refundable when an eligible cancellation is approved more than <?= CANCELLATION_REFUND_CUTOFF_HOURS ?> hours before the scheduled pickup. Requests submitted inside that window can still be reviewed by an administrator, but no automatic refund is due under the standard policy. Every refund remains linked to its original verified payment and is shown in the booking invoice/history.</p>
             <div class="refund-policy-grid">
                 <p><strong>Cancellation Refund:</strong> applies when an eligible booking is cancelled before the rental.</p>
                 <p><strong>Payment Refund:</strong> corrects or reverses an eligible verified payment without automatically cancelling the booking.</p>
@@ -109,6 +119,5 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             </div>
         </article>
     </div>
-</section>
 </section>
 <?php require dirname(__DIR__, 2) . "/includes/footer.php"; ?>

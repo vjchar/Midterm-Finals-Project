@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/booking.php
+ * FILE PURPOSE: Main customer booking form and booking-creation page.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $authenticatedUser = require_customer();
@@ -94,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             if ($requestedFormAction === "preview") {
                 $estimateAvailabilityMessage =
-                    "Available for the selected schedule. This estimate was calculated by PHP on the server.";
+                    "Available for the selected schedule. Your estimate has been updated.";
                 $estimateAvailabilityClass = "is-success";
             } elseif ($requestedFormAction === "save_draft") {
                 $savedDraft = save_booking_draft(
@@ -167,7 +176,7 @@ $selectedVehicleImageSource = is_file(
 
 $pageTitle = "Book a Car | VJ Car Rental";
 $pageDescription =
-    "Build, save, resume, or confirm a VJ Car Rental booking with server-verified availability and pricing.";
+    "Create, save, resume, or confirm a VJ Car Rental booking with current availability and pricing.";
 $pageScripts = ["assets/js/booking-vehicle-preview.js"];
 
 require dirname(__DIR__, 2) . "/includes/header.php";
@@ -604,7 +613,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     class="booking-summary-card sticky-lg-top"
                     data-booking-vehicle-preview
                     aria-live="polite">
-                    <span class="section-kicker">Server estimate</span>
+                    <span class="section-kicker">Booking estimate</span>
                     <img
                         id="bookingVehiclePreviewImage"
                         src="<?= escape_html($selectedVehicleImageSource) ?>"

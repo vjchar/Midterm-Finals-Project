@@ -1,1 +1,4 @@
+# FILE: storage/vehicle-uploads/.gitkeep
+# PURPOSE: Directory placeholder tracked by Git.
+# USAGE: Keeps the empty storage/vehicle-uploads directory present in the repository until runtime files are created there.
 

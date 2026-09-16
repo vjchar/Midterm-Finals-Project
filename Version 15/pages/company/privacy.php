@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/privacy.php
+ * FILE PURPOSE: Public privacy-policy page.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $pageTitle = "Privacy Policy | VJ Car Rental";
 $pageDescription =
-    "Review the presentation-only privacy policy page for VJ Car Rental.";
+    "Review the privacy policy for VJ Car Rental.";
 require dirname(__DIR__, 2) . "/includes/header.php";
 ?>
 
@@ -34,7 +43,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <article class="col-lg-9 legal-copy">
                 <div class="legal-notice">
                     <i class="bi bi-shield-check"></i>
-                    <p>This policy describes the application’s implemented data handling. The rental operator should add its registered business identity, retention timetable, and data-protection contact before a public launch, then obtain appropriate legal review.</p>
+                    <p>This policy explains how VJ Car Rental handles personal information used for inquiries, reservations, rentals, payments, and customer support.</p>
                 </div>
                 <section id="scope">
                     <span>01</span>
@@ -47,7 +56,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <span>02</span>
                     <div>
                         <h2>Information we may collect</h2>
-                        <p>Information may include contact details, driver's license and identity information, booking and payment details, rental history, vehicle condition records, support messages, and technical information produced when using a production website.</p>
+                        <p>Information may include contact details, driver's license and identity information, booking and payment details, rental history, vehicle condition records, support messages, and basic technical information generated when you use the website.</p>
                     </div>
                 </section>
                 <section id="use-data">
@@ -61,7 +70,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <span>04</span>
                     <div>
                         <h2>When information may be shared</h2>
-                        <p>Information may be shared with authorized service providers, payment processors, insurers, roadside assistance partners, professional advisers, or government authorities when necessary, lawful, and consistent with the final operating policy.</p>
+                        <p>Information may be shared with authorized service providers, payment processors, insurers, roadside assistance partners, professional advisers, or government authorities when necessary, lawful, and consistent with applicable policies.</p>
                     </div>
                 </section>
                 <section id="security">

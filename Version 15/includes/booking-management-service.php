@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/booking-management-service.php
+ * FILE PURPOSE: Booking modification, rescheduling, and cancellation service.
+ * USED BY: Manage-booking, modification, and cancellation pages.
+ * RESPONSIBILITY: Encapsulates eligibility rules, requests, calculations, and persistence for changes to existing bookings.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Customer and administrator booking changes, rescheduling, and cancellation workflows.
  */

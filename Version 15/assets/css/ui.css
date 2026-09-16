@@ -1,9 +1,15 @@
 /*
- * VJ Car Rental — Version 15 final polish layer
+ * FILE: assets/css/ui.css
+ * PURPOSE: Shared UI rules for spacing, typography, containers, cards, forms, and admin/customer surfaces.
+ * USAGE: Applies shared interface rules after the base and component styles.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
+/*
+ * VJ Car Rental — shared interface layer
  * ------------------------------------------------------------
- * A deliberately small, component-oriented finishing layer.
- * It standardizes shared visual tokens and refines existing V14
- * structures without changing booking, payment, rental, or admin logic.
+ * Shared interface rules for consistent spacing, surfaces, controls, cards,
+ * and typography without changing booking, payment, rental, or admin logic.
  */
 
 :root {
@@ -167,7 +173,11 @@ button:disabled {
 .form-select:hover:not(:disabled) {
   border-color: #91aec9;
 }
-
+#refundType.form-select {
+  width: 220px;
+  min-width: 220px;
+  flex: 0 0 220px;
+}
 .form-control:focus,
 .form-select:focus {
   border-color: #3f7aba;
@@ -1277,5 +1287,219 @@ textarea.form-control {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* ------------------------------------------------------------------
+   Shared layout consistency
+   ------------------------------------------------------------------ */
+:root {
+  --content-max: 1320px;
+  --content-readable: 760px;
+  --content-gutter: clamp(18px, 3vw, 32px);
+  --surface-radius: 18px;
+  --surface-radius-lg: 24px;
+  --surface-border: rgba(15, 45, 92, 0.12);
+  --surface-shadow: 0 12px 32px rgba(15, 45, 92, 0.09);
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.container {
+  width: min(calc(100% - (2 * var(--content-gutter))), var(--content-max));
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.page-hero h1,
+.page-hero--legal h1,
+.account-hero h1,
+.admin-page-heading h1 {
+  font-size: clamp(2.25rem, 4.5vw, 4rem);
+  line-height: 1.08;
+}
+
+.section-heading h2,
+.fleet-shelf__heading h2,
+.dashboard-panel__header h2,
+.admin-editor__heading h2 {
+  font-weight: 700;
+}
+
+.section-kicker {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.065em;
+}
+
+.content-section,
+.account-section,
+.admin-section {
+  padding-block: clamp(52px, 6vw, 84px);
+}
+
+.form,
+.auth-form,
+.admin-editor,
+.booking-summary-card,
+.operation-card,
+.dashboard-panel,
+.admin-table-wrap,
+.payment-overview,
+.booking-management-panel,
+.empty-state {
+  border-color: var(--surface-border);
+  border-radius: var(--surface-radius);
+  box-shadow: var(--surface-shadow);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  min-height: 46px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-help,
+.display-note,
+.admin-table td small {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.btn {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.vehicle-card {
+  border-color: var(--surface-border);
+  border-radius: var(--surface-radius);
+  box-shadow: 0 10px 26px rgba(15, 45, 92, 0.08);
+}
+
+.vehicle-card-body {
+  padding: 16px 16px 17px;
+}
+
+.vehicle-card h3,
+.vehicle-card--compact h3 {
+  display: -webkit-box;
+  min-height: 2.5em;
+  margin: 6px 0 10px;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.vehicle-card--compact h3 {
+  font-size: 0.95rem;
+}
+
+.vehicle-card .vehicle-category,
+.vehicle-card .fleet-state {
+  font-size: 0.72rem;
+}
+
+.vehicle-card--compact .vehicle-card-body {
+  padding: 13px 14px 15px;
+}
+
+.vehicle-price-row {
+  min-height: 48px;
+  align-items: center;
+}
+
+.vehicle-price-row strong {
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.vehicle-price-row small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.vehicle-card--compact .vehicle-price-row {
+  justify-content: center;
+  text-align: center;
+}
+
+.fleet-shelf {
+  border-color: var(--surface-border);
+  border-radius: var(--surface-radius-lg);
+  box-shadow: 0 12px 30px rgba(15, 45, 92, 0.08);
+}
+
+.fleet-shelf__heading {
+  gap: 16px;
+  min-height: 44px;
+}
+
+.fleet-shelf__heading h2 {
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+}
+
+.admin-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.admin-table td {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --content-gutter: 16px;
+  }
+
+  .content-section,
+  .account-section,
+  .admin-section {
+    padding-block: 44px;
+  }
+
+  .page-hero h1,
+  .page-hero--legal h1,
+  .account-hero h1,
+  .admin-page-heading h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .vehicle-card-body,
+  .vehicle-card--compact .vehicle-card-body {
+    padding: 14px;
   }
 }

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/fleet/favorites.php
+ * FILE PURPOSE: Customer saved/favorite vehicles page.
+ * USED BY: Visitors/customers browsing and evaluating the vehicle fleet.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $authenticatedUser = require_customer();
 

@@ -1,4 +1,11 @@
 /*
+ * FILE: assets/css/operations.css
+ * PURPOSE: Operational/admin interface stylesheet.
+ * USAGE: Styles administration, booking operations, payment/rental management, tables, status elements, and other operations-focused screens.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
+/*
  * VJ Car Rental operations module
  * Customer verification, payments, notifications, invoices, rental workflow,
  * reporting, and the responsive administration shell live here so the base

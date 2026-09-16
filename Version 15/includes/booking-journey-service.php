@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/booking-journey-service.php
+ * FILE PURPOSE: Booking workflow and next-step decision service.
+ * USED BY: Booking confirmation, booking view, progress components, and customer journey guidance.
+ * RESPONSIBILITY: Determines the appropriate next action for a booking using focused journey resolver functions rather than placing workflow decisions in page files.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Return a compact status summary for the two required customer documents.
  *
@@ -87,12 +96,7 @@ function booking_deposit_journey_state(array $booking, array $paymentSummary): a
  */
 function booking_review_state(int $bookingId): ?array
 {
-    $statement = database()->prepare(
-        "SELECT id, status FROM reviews WHERE booking_id = ? LIMIT 1",
-    );
-    $statement->execute([$bookingId]);
-    $review = $statement->fetch();
-    return $review ?: null;
+    return review_for_booking($bookingId);
 }
 
 /**
@@ -124,7 +128,6 @@ function booking_next_step(array $booking): array
     $paymentSummary = $requirements["payments"];
     $deposit = booking_deposit_journey_state($booking, $paymentSummary);
     $documents = booking_document_journey_state((int) $booking["user_id"]);
-    $review = null;
     $reference = urlencode((string) $booking["reference"]);
     $bookingUrl = "booking-view.php?reference={$reference}";
     $paymentUrl = "payments.php?reference={$reference}";
@@ -147,9 +150,46 @@ function booking_next_step(array $booking): array
         "steps" => [],
     ];
 
-    $modification = unresolved_booking_modification((int) $booking["id"]);
-    $cancellation = cancellation_request_for_booking((int) $booking["id"]);
-    $refundSummary = refund_summary_for_booking((int) $booking["id"]);
+    $context = [
+        "payment_summary" => $paymentSummary,
+        "deposit" => $deposit,
+        "documents" => $documents,
+        "reference" => $reference,
+        "booking_url" => $bookingUrl,
+        "payment_url" => $paymentUrl,
+        "document_url" => $documentUrl,
+        "modification" => unresolved_booking_modification((int) $booking["id"]),
+        "cancellation" => cancellation_request_for_booking((int) $booking["id"]),
+        "refund_summary" => refund_summary_for_booking((int) $booking["id"]),
+    ];
+
+    $resolvers = [
+        "resolve_cancelled_booking_journey",
+        "resolve_cancellation_pending_journey",
+        "resolve_modification_payment_journey",
+        "resolve_modification_pending_journey",
+        "resolve_terminal_booking_journey",
+        "resolve_completed_booking_journey",
+        "resolve_returned_booking_journey",
+        "resolve_active_booking_journey",
+        "resolve_ready_booking_journey",
+        "resolve_confirmed_booking_journey",
+    ];
+
+    foreach ($resolvers as $resolver) {
+        $resolved = $resolver($booking, $journey, $context);
+        if ($resolved !== null) {
+            return $resolved;
+        }
+    }
+
+    return resolve_pending_booking_journey($booking, $journey, $context);
+}
+
+function resolve_cancelled_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $refundSummary = $context["refund_summary"];
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "cancelled") {
         if ($refundSummary["pending"] > 0) {
@@ -191,6 +231,13 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_cancellation_pending_journey(array $booking, array $journey, array $context): ?array
+{
+    $cancellation = $context["cancellation"];
+    $reference = $context["reference"];
 
     if (($cancellation["status"] ?? null) === "pending") {
         $journey = array_merge($journey, [
@@ -206,6 +253,13 @@ function booking_next_step(array $booking): array
         ]);
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_modification_payment_journey(array $booking, array $journey, array $context): ?array
+{
+    $modification = $context["modification"];
+    $paymentUrl = $context["payment_url"];
 
     if ($modification && $modification["status"] === "approved" && (int) $modification["price_difference"] > 0) {
         $pendingPayment = database()->prepare("SELECT COUNT(*) FROM payments WHERE booking_modification_id=? AND payment_type='modification' AND status='pending'");
@@ -237,6 +291,13 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_modification_pending_journey(array $booking, array $journey, array $context): ?array
+{
+    $modification = $context["modification"];
+    $reference = $context["reference"];
 
     if ($modification && $modification["status"] === "pending") {
         $journey = array_merge($journey, [
@@ -252,6 +313,12 @@ function booking_next_step(array $booking): array
         ]);
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_terminal_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $bookingUrl = $context["booking_url"];
 
     $terminal = ["rejected", "no_show"];
     if (in_array($booking["status"], $terminal, true)) {
@@ -268,6 +335,14 @@ function booking_next_step(array $booking): array
         ]);
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_completed_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $paymentSummary = $context["payment_summary"];
+    $paymentUrl = $context["payment_url"];
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "completed") {
         refresh_rental_settlement_status((int) $booking["id"]);
@@ -334,6 +409,14 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_returned_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $paymentSummary = $context["payment_summary"];
+    $paymentUrl = $context["payment_url"];
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "returned") {
         refresh_rental_settlement_status((int) $booking["id"]);
@@ -406,6 +489,15 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_active_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $paymentSummary = $context["payment_summary"];
+    $paymentUrl = $context["payment_url"];
+    $reference = $context["reference"];
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "active") {
         if ((int) $paymentSummary["deposit_due"] + (int) $paymentSummary["rental_due"] > 0) {
@@ -474,6 +566,12 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_ready_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "ready") {
         $isDelivery = $booking["pickup_method"] === "Vehicle delivery";
@@ -492,6 +590,16 @@ function booking_next_step(array $booking): array
         ]);
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_confirmed_booking_journey(array $booking, array $journey, array $context): ?array
+{
+    $deposit = $context["deposit"];
+    $documents = $context["documents"];
+    $paymentUrl = $context["payment_url"];
+    $documentUrl = $context["document_url"];
+    $bookingUrl = $context["booking_url"];
 
     if ($booking["status"] === "confirmed") {
         // Confirmation normally means the requirements were verified, but derive
@@ -553,6 +661,16 @@ function booking_next_step(array $booking): array
         }
         return booking_journey_with_steps($journey, $booking);
     }
+    return null;
+}
+
+function resolve_pending_booking_journey(array $booking, array $journey, array $context): array
+{
+    $deposit = $context["deposit"];
+    $documents = $context["documents"];
+    $paymentUrl = $context["payment_url"];
+    $documentUrl = $context["document_url"];
+    $bookingUrl = $context["booking_url"];
 
     // Pending booking onboarding: payment first, then documents, then verification.
     if (!$deposit["verified"] && !$deposit["submitted"]) {
@@ -633,6 +751,7 @@ function booking_next_step(array $booking): array
     ]);
     return booking_journey_with_steps($journey, $booking);
 }
+
 
 /**
  * Add the five customer-facing booking journey steps and their visual states.

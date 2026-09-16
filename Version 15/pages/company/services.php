@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/services.php
+ * FILE PURPOSE: Public services overview page.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $rentalAddOns = addon_all();
@@ -89,7 +98,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <div>
                 <span class="section-kicker">Optional rental extras</span>
                 <h2>Customize the car around your trip</h2>
-                <p>Add these items while building your reservation. Pricing is recalculated and saved securely by the server.</p>
+                <p>Add these items while building your reservation. Pricing updates automatically when you add or remove extras.</p>
             </div>
             <a class="btn btn-outline" href="faq.php">View Service FAQs</a>
         </div>

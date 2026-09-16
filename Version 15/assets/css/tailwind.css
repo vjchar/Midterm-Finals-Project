@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/css/tailwind.css
+ * PURPOSE: Generated/local Tailwind utility stylesheet used by legacy utility classes.
+ * USAGE: Supplies any retained Tailwind-style utility rules still referenced by the markup. Avoid hand-editing generated rules when possible.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
 *,
 :after,
 :before {

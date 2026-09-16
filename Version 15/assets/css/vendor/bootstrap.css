@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/css/vendor/bootstrap.css
+ * PURPOSE: Vendored Bootstrap CSS framework.
+ * USAGE: Provides Bootstrap grid, utilities, forms, buttons, responsive behavior, and component styling. Avoid editing vendor code unless intentionally replacing the framework version.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
 @charset "UTF-8";
 /*!
  * Bootstrap  v5.3.8 (https://getbootstrap.com/)

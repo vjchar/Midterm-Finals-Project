@@ -2,80 +2,22 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/account/profile.php
+ * FILE PURPOSE: Customer profile and account-information update page.
+ * USED BY: Authenticated customers using their account area.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $user = require_customer();
 $errors = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
         require_csrf();
-        $name = post_string("name");
-        $email = strtolower(post_string("email"));
-        $phone = post_string("phone");
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 120) {
-            throw new InvalidArgumentException("Enter your full name.");
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("Enter a valid email address.");
-        }
-        if ($phone !== "" && !preg_match('/^[0-9+()\-\s]{7,40}$/', $phone)) {
-            throw new InvalidArgumentException("Enter a valid phone number.");
-        }
-        $check = database()->prepare(
-            "SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER(?) AND id <> ?",
-        );
-        $check->execute([$email, $user["id"]]);
-        if ((int) $check->fetchColumn() > 0) {
-            throw new InvalidArgumentException(
-                "That email is already registered.",
-            );
-        }
-        $password = (string) ($_POST["new_password"] ?? "");
-        $sensitiveChange =
-            strcasecmp($email, (string) $user["email"]) !== 0 ||
-            $password !== "";
-        if ($sensitiveChange) {
-            $hashStatement = database()->prepare(
-                "SELECT password_hash FROM users WHERE id = ?",
-            );
-            $hashStatement->execute([$user["id"]]);
-            if (
-                !password_verify(
-                    (string) ($_POST["current_password"] ?? ""),
-                    (string) $hashStatement->fetchColumn(),
-                )
-            ) {
-                throw new InvalidArgumentException(
-                    "Your current password is required for email or password changes.",
-                );
-            }
-        }
-        $parameters = [$name, $email, $phone];
-        $sql = "UPDATE users SET name = ?, email = ?, phone = ?";
-        if ($password !== "") {
-            if (
-                $password !==
-                (string) ($_POST["new_password_confirmation"] ?? "")
-            ) {
-                throw new InvalidArgumentException(
-                    "The new password confirmation does not match.",
-                );
-            }
-            $passwordErrors = password_errors($password);
-            if ($passwordErrors) {
-                throw new InvalidArgumentException(
-                    implode(" ", $passwordErrors),
-                );
-            }
-            $sql .= ", password_hash = ?";
-            $parameters[] = password_hash($password, PASSWORD_DEFAULT);
-        }
-        $sql .= ", updated_at = ? WHERE id = ?";
-        $parameters[] = date("Y-m-d H:i:s");
-        $parameters[] = $user["id"];
-        $statement = database()->prepare($sql);
-        $statement->execute($parameters);
-        current_user(true);
-        write_audit("profile_updated", "user", $user["id"]);
+        update_customer_profile((int) $user["id"], $_POST, $user);
         flash("success", "Profile updated successfully.");
         redirect("profile.php");
     } catch (Throwable $error) {

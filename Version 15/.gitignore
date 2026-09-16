@@ -1,3 +1,8 @@
+# FILE: .gitignore
+# PURPOSE: Git ignore rules for runtime/private/generated files.
+# USAGE: Git uses this file to keep logs, customer uploads, payment proofs, review uploads, vehicle uploads, and OS metadata out of commits while retaining .gitkeep placeholders.
+# Maintenance: keep these rules aligned with the application structure.
+
 storage/logs/*.log
 storage/documents/*
 storage/payment-proofs/*

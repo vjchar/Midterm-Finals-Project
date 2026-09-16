@@ -2,67 +2,22 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-addons.php
+ * FILE PURPOSE: Administrator add-on catalog management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $errors = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
         require_csrf();
-        $id = (int) post_string("addon_id");
-        $key = strtolower(
-            preg_replace("/[^a-z0-9-]/i", "-", post_string("addon_key")),
-        );
-        $name = mb_substr(post_string("name"), 0, 140);
-        $price = (int) post_string("price");
-        $billing = post_string("billing");
-        $icon = preg_replace("/[^a-z0-9-]/i", "", post_string("icon"));
-        $active = isset($_POST["is_active"]) ? 1 : 0;
-        if ($key === "" || $name === "" || strlen($key) > 80) {
-            throw new InvalidArgumentException("Enter a key and display name.");
-        }
-        if ($price < 0 || !in_array($billing, ["day", "rental"], true)) {
-            throw new InvalidArgumentException(
-                "Enter valid pricing and billing.",
-            );
-        }
-        if ($icon === "" || strlen($icon) > 80) {
-            $icon = "bi-plus-circle";
-        }
-        $currentTimestamp = date("Y-m-d H:i:s");
-        if ($id > 0) {
-            $statement = database()->prepare(
-                "UPDATE addons SET addon_key=?, name=?, price=?, billing=?, icon=?, is_active=?, updated_at=? WHERE id=?",
-            );
-            $statement->execute([
-                $key,
-                $name,
-                $price,
-                $billing,
-                $icon,
-                $active,
-                $currentTimestamp,
-                $id,
-            ]);
-        } else {
-            $statement = database()->prepare(
-                "INSERT INTO addons (addon_key,name,price,billing,icon,is_active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
-            );
-            $statement->execute([
-                $key,
-                $name,
-                $price,
-                $billing,
-                $icon,
-                $active,
-                $currentTimestamp,
-                $currentTimestamp,
-            ]);
-            $id = (int) database()->lastInsertId();
-        }
-        write_audit("addon_saved", "addon", $id, [
-            "key" => $key,
-            "active" => (bool) $active,
-        ]);
+        save_addon($_POST);
         flash("success", "Rental add-on saved.");
         redirect("admin-addons.php");
     } catch (Throwable $error) {
@@ -73,12 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 $editId = (int) ($_GET["edit"] ?? 0);
-$edit = null;
-if ($editId) {
-    $statement = database()->prepare("SELECT * FROM addons WHERE id=?");
-    $statement->execute([$editId]);
-    $edit = $statement->fetch() ?: null;
-}
+$edit = $editId > 0 ? addon_find($editId) : null;
 $addons = addon_all(false);
 $value = static fn(string $key, mixed $default = ""): string => escape_html(
     $_POST[$key] ?? ($edit[$key] ?? $default),

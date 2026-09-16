@@ -2,59 +2,21 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/contact.php
+ * FILE PURPOSE: Public contact/enquiry form page.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $errors = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
         require_csrf();
-        if (post_string("website") !== "") {
-            throw new RuntimeException("Message rejected.");
-        }
-        $name = post_string("name");
-        $email = strtolower(post_string("email"));
-        $phone = post_string("phone");
-        $subject = post_string("subject");
-        $message = post_string("message");
-        $allowedSubjects = [
-            "New booking",
-            "Vehicle information",
-            "Corporate rental",
-            "Existing rental support",
-            "Other inquiry",
-        ];
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 120) {
-            throw new InvalidArgumentException("Enter your full name.");
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException("Enter a valid email address.");
-        }
-        if (!in_array($subject, $allowedSubjects, true)) {
-            throw new InvalidArgumentException("Choose a valid support topic.");
-        }
-        if (mb_strlen($message) < 20 || mb_strlen($message) > 5000) {
-            throw new InvalidArgumentException(
-                "Enter a message between 20 and 5,000 characters.",
-            );
-        }
-        $statement = database()->prepare(
-            "INSERT INTO contact_messages (name, email, phone, subject, message, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        );
-        $currentTimestamp = date("Y-m-d H:i:s");
-        $statement->execute([
-            $name,
-            $email,
-            $phone,
-            $subject,
-            $message,
-            "new",
-            $currentTimestamp,
-            $currentTimestamp,
-        ]);
-        write_audit(
-            "contact_message_created",
-            "contact_message",
-            (int) database()->lastInsertId(),
-        );
+        create_contact_message($_POST);
         flash(
             "success",
             "Your message was received. Our team will respond through your email address.",

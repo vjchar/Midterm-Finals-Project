@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/fleet/vehicles.php
+ * FILE PURPOSE: Main vehicle catalog, search, and filter page.
+ * USED BY: Visitors/customers browsing and evaluating the vehicle fleet.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $vehicles = vehicle_all();
@@ -251,7 +260,7 @@ $activeFilterParameters = array_filter(
 
 $pageTitle = "Our Vehicles | VJ Car Rental";
 $pageDescription =
-    "Browse and filter 75 VJ Car Rental vehicles with server-checked date availability.";
+    "Browse and filter 75 VJ Car Rental vehicles with current date availability.";
 
 require dirname(__DIR__, 2) . "/includes/header.php";
 ?>
@@ -639,7 +648,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
             <div>
                 <i class="bi bi-receipt" aria-hidden="true"></i>
                 <span>
-                    <small>Server pricing</small>
+                    <small>Current pricing</small>
                     <strong>Rates, deposits, extras,<br>and discounts verified.</strong>
                 </span>
             </div>

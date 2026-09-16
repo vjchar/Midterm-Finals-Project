@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/faq.php
+ * FILE PURPOSE: Public frequently asked questions page.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $pageTitle = "Rental FAQs | VJ Car Rental";
 $pageDescription =
     "Review renter requirements, policies, pickup guidance, add-ons, booking changes, and roadside information.";
@@ -17,7 +26,7 @@ $faqs = [
         "id" => "availability",
         "question" => "How is vehicle availability checked?",
         "answer" =>
-            "Choose your pick-up and return schedule on a vehicle page or during booking. The server checks saved pending, confirmed, and active reservations before it accepts a new booking.",
+            "Choose your pick-up and return schedule on a vehicle page or during booking. Availability is checked against pending, confirmed, and active reservations before a new booking is accepted.",
     ],
     [
         "id" => "pricing",

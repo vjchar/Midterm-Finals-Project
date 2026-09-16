@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-messages.php
+ * FILE PURPOSE: Administrator contact enquiry/message management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $errors = [];
@@ -11,24 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         require_csrf();
         $messageId = (int) post_string("message_id");
         $status = post_string("status");
-        if (!in_array($status, $validStatuses, true)) {
-            throw new InvalidArgumentException(
-                "Choose a valid message status.",
-            );
-        }
-        $statement = database()->prepare(
-            "UPDATE contact_messages SET status = ?, updated_at = ? WHERE id = ?",
-        );
-        $statement->execute([$status, date("Y-m-d H:i:s"), $messageId]);
-        if (!$statement->rowCount()) {
-            throw new RuntimeException("Contact message not found.");
-        }
-        write_audit(
-            "contact_message_updated",
-            "contact_message",
-            $messageId,
-            ["status" => $status],
-        );
+        update_contact_message_status($messageId, $status);
         flash("success", "Enquiry status updated.");
         redirect(
             "admin-messages.php?status=" .
@@ -42,16 +34,7 @@ $filter = (string) ($_GET["status"] ?? "new");
 if (!in_array($filter, array_merge(["all"], $validStatuses), true)) {
     $filter = "new";
 }
-$sql = "SELECT * FROM contact_messages";
-$parameters = [];
-if ($filter !== "all") {
-    $sql .= " WHERE status = ?";
-    $parameters[] = $filter;
-}
-$sql .= " ORDER BY created_at DESC";
-$statement = database()->prepare($sql);
-$statement->execute($parameters);
-$messages = $statement->fetchAll();
+$messages = contact_messages($filter);
 $pageTitle = "Contact Enquiries | VJ Car Rental";
 require dirname(__DIR__, 2) . "/includes/header.php";
 require dirname(__DIR__, 2) . "/includes/admin-nav.php";

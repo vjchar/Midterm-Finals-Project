@@ -2,8 +2,17 @@
 
 declare(strict_types=1);
 
+
 /**
- * Direct XAMPP configuration for the school-final project.
+ * FILE: includes/config.php
+ * FILE PURPOSE: Central application configuration.
+ * USED BY: bootstrap.php and services that need environment, URL, storage, or payment settings.
+ * RESPONSIBILITY: Stores configurable constants such as app settings, GCash details, bank account details, and runtime options in one place.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
+/**
+ * Local XAMPP configuration for VJ Car Rental.
  *
  * This application uses no environment-variable loader. If XAMPP uses a
  * different MySQL password or port, change the values in this file.
@@ -37,8 +46,8 @@ const CANCELLATION_REFUND_CUTOFF_HOURS = 24;
 
 // Manual payment account details. Replace these placeholders with the actual
 // VJ Car Rental payment details before deployment.
-const PAYMENT_GCASH_NAME = "Vj Charles Bernardino";
-const PAYMENT_GCASH_NUMBER = "0994 894 5174";
-const PAYMENT_BANK_NAME = "VJ Charles O. Bernardino";
-const PAYMENT_BANK_ACCOUNT_NAME = "VJ Charles O. Bernardino";
-const PAYMENT_BANK_ACCOUNT_NUMBER = "2246 6879 1579";
+const PAYMENT_GCASH_NAME = "VJ Car Rental";
+const PAYMENT_GCASH_NUMBER = "09XX XXX XXXX";
+const PAYMENT_BANK_NAME = "YOUR BANK";
+const PAYMENT_BANK_ACCOUNT_NAME = "VJ Car Rental";
+const PAYMENT_BANK_ACCOUNT_NUMBER = "XXXX XXXX XXXX";

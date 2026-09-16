@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: actions/api.php
+ * FILE PURPOSE: Central AJAX/API endpoint for lightweight interactive actions.
+ * USED BY: JavaScript and forms that request availability, estimates, favorites, promos, and related JSON responses.
+ * RESPONSIBILITY: Validates request input, delegates business work to services, and returns a response. It should not contain direct SQL.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__) . "/includes/bootstrap.php";
 
 $action = strtolower(trim((string) ($_GET["action"] ?? "")));
@@ -123,18 +132,16 @@ switch ($action) {
             if (!$selectedVehicle) {
                 throw new InvalidArgumentException("Vehicle not found.");
             }
-            $existingFavoriteStatement = database()->prepare("SELECT id FROM favorites WHERE user_id = ? AND vehicle_id = ?");
-            $existingFavoriteStatement->execute([$authenticatedUser["id"], $selectedVehicle["id"]]);
-            $existingFavoriteId = $existingFavoriteStatement->fetchColumn();
-            if ($existingFavoriteId) {
-                $deleteFavoriteStatement = database()->prepare("DELETE FROM favorites WHERE id = ?");
-                $deleteFavoriteStatement->execute([$existingFavoriteId]);
-                flash("success", "Vehicle removed from your favorites.");
-            } else {
-                $createFavoriteStatement = database()->prepare("INSERT INTO favorites (user_id, vehicle_id, created_at) VALUES (?, ?, ?)");
-                $createFavoriteStatement->execute([$authenticatedUser["id"], $selectedVehicle["id"], date("Y-m-d H:i:s")]);
-                flash("success", "Vehicle saved to your favorites.");
-            }
+            $isFavorite = toggle_vehicle_favorite(
+                (int) $authenticatedUser["id"],
+                (int) $selectedVehicle["id"],
+            );
+            flash(
+                "success",
+                $isFavorite
+                    ? "Vehicle saved to your favorites."
+                    : "Vehicle removed from your favorites.",
+            );
         } catch (Throwable $error) {
             flash("danger", user_facing_error_message($error));
         }
@@ -152,23 +159,12 @@ switch ($action) {
             if ($return <= $pickup) {
                 throw new InvalidArgumentException("Return must be later than pickup.");
             }
-            $query = <<<'SQL'
-SELECT DISTINCT v.slug
-FROM vehicles AS v
-LEFT JOIN bookings AS b
-    ON b.vehicle_id = v.id
-    AND b.status IN ('pending', 'confirmed', 'ready', 'active')
-    AND b.pickup_at < ?
-    AND b.return_at > ?
-WHERE v.is_active = 0
-    OR v.availability_status IN ('maintenance', 'unavailable')
-    OR b.id IS NOT NULL
-SQL;
-            $statement = database()->prepare($query);
-            $statement->execute([$return->format("Y-m-d H:i:s"), $pickup->format("Y-m-d H:i:s")]);
             $respondJson([
                 "ok" => true,
-                "unavailable" => array_column($statement->fetchAll(), "slug"),
+                "unavailable" => unavailable_vehicle_slugs(
+                    $pickup->format("Y-m-d H:i:s"),
+                    $return->format("Y-m-d H:i:s"),
+                ),
                 "message" => sprintf("Fleet filtered for %s to %s.", $pickup->format("M j"), $return->format("M j, Y")),
             ]);
         } catch (Throwable $error) {

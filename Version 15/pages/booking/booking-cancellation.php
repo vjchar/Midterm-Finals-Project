@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/booking-cancellation.php
+ * FILE PURPOSE: Booking cancellation request and confirmation page.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . '/includes/bootstrap.php';
 $user = require_customer();
 $reference = trim((string) ($_GET['reference'] ?? ($_POST['reference'] ?? '')));

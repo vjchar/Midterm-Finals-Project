@@ -1,6 +1,15 @@
 <?php
 
 declare(strict_types=1);
+
+/**
+ * FILE: pages/admin/admin-calendar.php
+ * FILE PURPOSE: Administrator rental/booking calendar page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . '/includes/bootstrap.php';
 require_admin();
 $view = in_array($_GET['view'] ?? 'month', ['month','week','day'], true) ? (string) $_GET['view'] : 'month';

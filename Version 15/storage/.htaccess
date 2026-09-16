@@ -1,1 +1,6 @@
+# FILE: storage/.htaccess
+# PURPOSE: Apache protection for the private storage directory.
+# USAGE: Denies direct browser access so documents, proofs, and uploads must be served through authorized PHP endpoints.
+# Maintenance: keep these rules aligned with the application structure.
+
 Require all denied

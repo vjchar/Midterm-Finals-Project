@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/css/style.css
+ * PURPOSE: Primary global VJ Car Rental stylesheet.
+ * USAGE: Defines the base design system, typography, colors, layouts, components, forms, cards, and general public/customer UI styling.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
 :root {
   --font-heading: "Poppins", "Arial Black", sans-serif;
   --font-body: "Inter", "Segoe UI", Arial, sans-serif;
@@ -4436,6 +4443,15 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
 }
 .booking-selector--within-form {
   align-items: center;
+}
+#refundType.form-select {
+  font-size: 0.875rem;
+}
+.booking-selector > span[aria-hidden="true"] {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
 }
 .print-instruction {
   display: inline-flex;

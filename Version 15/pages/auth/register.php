@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/auth/register.php
+ * FILE PURPOSE: Customer registration page.
+ * USED BY: Visitors or users entering/leaving the authentication flow.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $returnTo = safe_return_to(
     $_GET["return_to"] ?? ($_POST["return_to"] ?? null),
@@ -43,7 +52,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                 <h1>Your trips in one place</h1>
                 <p>An account gives you protected access to booking history, rescheduling, cancellation, favorites, and completed-trip reviews.</p>
                 <ul>
-                    <li>Transparent server-calculated totals</li>
+                    <li>Transparent booking totals</li>
                     <li>Date-based vehicle availability</li>
                     <li>Private account and reservation records</li>
                 </ul>

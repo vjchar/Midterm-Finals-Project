@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/js/booking-vehicle-preview.js
+ * PURPOSE: Booking-form vehicle preview behavior.
+ * USAGE: Keeps the selected vehicle preview/details synchronized while a customer creates or edits a booking.
+ * Maintenance: keep this script focused on the browser behavior described above.
+ */
+
 "use strict";
 
 document.addEventListener("DOMContentLoaded", function () {

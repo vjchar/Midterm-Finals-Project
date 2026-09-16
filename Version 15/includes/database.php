@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/database.php
+ * FILE PURPOSE: PDO database connection and shared low-level database utilities.
+ * USED BY: Domain services that need MySQL access.
+ * RESPONSIBILITY: Creates and reuses the PDO connection with safe settings; business-specific queries should remain in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Return the process-local PDO connection used by the application services.
  */
@@ -31,4 +40,10 @@ function database(): PDO
     );
 
     return $databaseConnection;
+}
+
+/** Return the connected PDO driver name for diagnostics. */
+function database_driver_name(): string
+{
+    return (string) database()->getAttribute(PDO::ATTR_DRIVER_NAME);
 }

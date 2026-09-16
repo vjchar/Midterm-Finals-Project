@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/auth.php
+ * FILE PURPOSE: Authentication, session, account, password-reset, and access-control service.
+ * USED BY: Login/register/account pages and any page requiring customer or admin authorization.
+ * RESPONSIBILITY: Handles current-user lookup, login security, password hashing/verification, role checks, profile changes, password reset persistence, and admin user-access operations.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 function current_user(bool $refresh = false): ?array
 {
     static $cachedUser = false;
@@ -274,4 +283,263 @@ function register_user(array $input, string $role = "customer"): int
     $id = (int) database()->lastInsertId();
     write_audit("register", "user", $id, ["role" => $role]);
     return $id;
+}
+
+/****************************************************************************
+ * ACCOUNT PROFILE AND PASSWORD RECOVERY
+ ****************************************************************************/
+
+/**
+ * Update a customer's profile while keeping sensitive account changes behind
+ * current-password verification.
+ */
+function update_customer_profile(int $userId, array $input, array $currentUser): void
+{
+    $name = trim((string) ($input["name"] ?? ""));
+    $email = strtolower(trim((string) ($input["email"] ?? "")));
+    $phone = trim((string) ($input["phone"] ?? ""));
+
+    if (mb_strlen($name) < 2 || mb_strlen($name) > 120) {
+        throw new InvalidArgumentException("Enter your full name.");
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new InvalidArgumentException("Enter a valid email address.");
+    }
+    if ($phone !== "" && !preg_match('/^[0-9+()\-\s]{7,40}$/', $phone)) {
+        throw new InvalidArgumentException("Enter a valid phone number.");
+    }
+
+    $check = database()->prepare(
+        "SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER(?) AND id <> ?",
+    );
+    $check->execute([$email, $userId]);
+    if ((int) $check->fetchColumn() > 0) {
+        throw new InvalidArgumentException("That email is already registered.");
+    }
+
+    $newPassword = (string) ($input["new_password"] ?? "");
+    $sensitiveChange =
+        strcasecmp($email, (string) ($currentUser["email"] ?? "")) !== 0 ||
+        $newPassword !== "";
+
+    if ($sensitiveChange) {
+        $hashStatement = database()->prepare(
+            "SELECT password_hash FROM users WHERE id = ?",
+        );
+        $hashStatement->execute([$userId]);
+        $storedHash = (string) $hashStatement->fetchColumn();
+        if (
+            $storedHash === "" ||
+            !password_verify(
+                (string) ($input["current_password"] ?? ""),
+                $storedHash,
+            )
+        ) {
+            throw new InvalidArgumentException(
+                "Your current password is required for email or password changes.",
+            );
+        }
+    }
+
+    $parameters = [$name, $email, $phone];
+    $sql = "UPDATE users SET name = ?, email = ?, phone = ?";
+
+    if ($newPassword !== "") {
+        if (
+            $newPassword !==
+            (string) ($input["new_password_confirmation"] ?? "")
+        ) {
+            throw new InvalidArgumentException(
+                "The new password confirmation does not match.",
+            );
+        }
+        $passwordErrors = password_errors($newPassword);
+        if ($passwordErrors) {
+            throw new InvalidArgumentException(implode(" ", $passwordErrors));
+        }
+        $sql .= ", password_hash = ?";
+        $parameters[] = password_hash($newPassword, PASSWORD_DEFAULT);
+    }
+
+    $sql .= ", updated_at = ? WHERE id = ?";
+    $parameters[] = date("Y-m-d H:i:s");
+    $parameters[] = $userId;
+
+    $statement = database()->prepare($sql);
+    $statement->execute($parameters);
+    current_user(true);
+    write_audit("profile_updated", "user", $userId);
+}
+
+/**
+ * Create a one-hour password reset token when the account exists and has not
+ * requested another reset during the last 15 minutes.
+ */
+function request_password_reset(string $email): void
+{
+    $email = strtolower(trim($email));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new InvalidArgumentException("Enter a valid email address.");
+    }
+
+    $statement = database()->prepare(
+        "SELECT id, email FROM users WHERE LOWER(email) = LOWER(?) AND status = 'active' LIMIT 1",
+    );
+    $statement->execute([$email]);
+    $user = $statement->fetch();
+    if (!$user) {
+        return;
+    }
+
+    $recent = database()->prepare(
+        "SELECT COUNT(*) FROM password_resets WHERE user_id = ? AND created_at >= ?",
+    );
+    $recent->execute([(int) $user["id"], date("Y-m-d H:i:s", time() - 900)]);
+    if ((int) $recent->fetchColumn() > 0) {
+        return;
+    }
+
+    $token = bin2hex(random_bytes(32));
+    $insert = database()->prepare(
+        "INSERT INTO password_resets (user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?)",
+    );
+    $insert->execute([
+        (int) $user["id"],
+        hash("sha256", $token),
+        date("Y-m-d H:i:s", time() + 3600),
+        date("Y-m-d H:i:s"),
+    ]);
+    send_password_reset(
+        (string) $user["email"],
+        url("reset-password.php?token=" . urlencode($token)),
+    );
+}
+
+/** Return one valid, unused password reset record for a raw token. */
+function password_reset_record(string $token): ?array
+{
+    $token = trim($token);
+    if ($token === "") {
+        return null;
+    }
+
+    $statement = database()->prepare(
+        "SELECT pr.*, u.email FROM password_resets pr JOIN users u ON u.id = pr.user_id WHERE pr.token_hash = ? AND pr.used_at IS NULL AND pr.expires_at >= ? LIMIT 1",
+    );
+    $statement->execute([hash("sha256", $token), date("Y-m-d H:i:s")]);
+    $reset = $statement->fetch();
+    return $reset ?: null;
+}
+
+/** Consume a valid reset record and replace the user's password securely. */
+function complete_password_reset(array $reset, string $password, string $confirmation): void
+{
+    if ($password !== $confirmation) {
+        throw new InvalidArgumentException("The password confirmation does not match.");
+    }
+    $errors = password_errors($password);
+    if ($errors) {
+        throw new InvalidArgumentException(implode(" ", $errors));
+    }
+
+    $database = database();
+    $database->beginTransaction();
+    try {
+        $now = date("Y-m-d H:i:s");
+        $update = $database->prepare(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+        );
+        $update->execute([
+            password_hash($password, PASSWORD_DEFAULT),
+            $now,
+            (int) $reset["user_id"],
+        ]);
+        $consume = $database->prepare(
+            "UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL",
+        );
+        $consume->execute([$now, (int) $reset["user_id"]]);
+        $database->commit();
+    } catch (Throwable $error) {
+        if ($database->inTransaction()) {
+            $database->rollBack();
+        }
+        throw $error;
+    }
+}
+
+/**
+ * Update a user's administrator/customer access while ensuring at least one
+ * active administrator always remains.
+ */
+function admin_update_user_access(
+    int $actingAdminId,
+    int $userId,
+    string $role,
+    string $status,
+): string {
+    if (
+        !in_array($role, ["customer", "admin"], true) ||
+        !in_array($status, ["active", "inactive"], true)
+    ) {
+        throw new InvalidArgumentException("Choose a valid role and account status.");
+    }
+
+    $statement = database()->prepare(
+        "SELECT id, name, email, role, status FROM users WHERE id = ? LIMIT 1",
+    );
+    $statement->execute([$userId]);
+    $target = $statement->fetch();
+    if (!$target) {
+        throw new RuntimeException("User account not found.");
+    }
+
+    if (
+        $userId === $actingAdminId &&
+        ($role !== "admin" || $status !== "active")
+    ) {
+        throw new RuntimeException(
+            "You cannot remove or deactivate your own administrator access.",
+        );
+    }
+
+    if (
+        $target["role"] === "admin" &&
+        ($role !== "admin" || $status !== "active")
+    ) {
+        $activeAdmins = (int) database()
+            ->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'")
+            ->fetchColumn();
+        if ($activeAdmins <= 1) {
+            throw new RuntimeException("At least one active administrator must remain.");
+        }
+    }
+
+    $update = database()->prepare(
+        "UPDATE users SET role = ?, status = ?, updated_at = ? WHERE id = ?",
+    );
+    $update->execute([$role, $status, date("Y-m-d H:i:s"), $userId]);
+    write_audit("user_access_updated", "user", $userId, [
+        "role" => $role,
+        "status" => $status,
+    ]);
+
+    return (string) $target["name"];
+}
+
+/** Return users for the administration account-management page. */
+function admin_users(string $query = ""): array
+{
+    $query = trim($query);
+    $sql = "SELECT u.*, COALESCE(bc.booking_count, 0) AS booking_count
+            FROM users u
+            LEFT JOIN (SELECT user_id, COUNT(*) AS booking_count FROM bookings GROUP BY user_id) bc ON bc.user_id = u.id";
+    $parameters = [];
+    if ($query !== "") {
+        $sql .= " WHERE LOWER(u.name) LIKE LOWER(?) OR LOWER(u.email) LIKE LOWER(?)";
+        $parameters = ["%" . $query . "%", "%" . $query . "%"];
+    }
+    $sql .= " ORDER BY u.created_at DESC";
+    $statement = database()->prepare($sql);
+    $statement->execute($parameters);
+    return $statement->fetchAll();
 }

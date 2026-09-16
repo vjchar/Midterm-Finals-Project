@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: errors/error.php
+ * FILE PURPOSE: Shared user-friendly HTTP error page.
+ * USED BY: The application error handler and Apache routing for 403, 404, and 500 responses.
+ * RESPONSIBILITY: Displays a safe error message without exposing stack traces, SQL errors, credentials, or server paths.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $errorCode = (int) ($errorCode ?? ($_GET["code"] ?? http_response_code()));
 if (!in_array($errorCode, [403, 404, 500], true)) {
     $errorCode = 404;

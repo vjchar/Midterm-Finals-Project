@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/company/about.php
+ * FILE PURPOSE: Public About Us page for the VJ Car Rental brand.
+ * USED BY: Public website visitors.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 $pageTitle = "About Us | VJ Car Rental";
 $pageDescription =
     "Learn about the VJ Car Rental mission, values, and commitment to reliable, clean, and affordable mobility.";

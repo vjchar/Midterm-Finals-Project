@@ -2,48 +2,30 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/auth/reset-password.php
+ * FILE PURPOSE: Password-reset completion page for a valid reset token.
+ * USED BY: Visitors or users entering/leaving the authentication flow.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $token = trim((string) ($_GET["token"] ?? ($_POST["token"] ?? "")));
-$tokenHash = $token !== "" ? hash("sha256", $token) : "";
-$statement = database()->prepare(
-    "SELECT pr.*, u.email FROM password_resets pr JOIN users u ON u.id = pr.user_id WHERE pr.token_hash = ? AND pr.used_at IS NULL AND pr.expires_at >= ? LIMIT 1",
-);
-$statement->execute([$tokenHash, date("Y-m-d H:i:s")]);
-$reset = $statement->fetch();
+$reset = password_reset_record($token);
 $errorMessage = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $reset) {
     try {
         require_csrf();
-        $password = (string) ($_POST["password"] ?? "");
-        if ($password !== (string) ($_POST["password_confirmation"] ?? "")) {
-            throw new InvalidArgumentException(
-                "The password confirmation does not match.",
-            );
-        }
-        $errors = password_errors($password);
-        if ($errors) {
-            throw new InvalidArgumentException(implode(" ", $errors));
-        }
-        database()->beginTransaction();
-        $update = database()->prepare(
-            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+        complete_password_reset(
+            $reset,
+            (string) ($_POST["password"] ?? ""),
+            (string) ($_POST["password_confirmation"] ?? ""),
         );
-        $update->execute([
-            password_hash($password, PASSWORD_DEFAULT),
-            date("Y-m-d H:i:s"),
-            $reset["user_id"],
-        ]);
-        $consume = database()->prepare(
-            "UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL",
-        );
-        $consume->execute([date("Y-m-d H:i:s"), $reset["user_id"]]);
-        database()->commit();
         flash("success", "Password updated. You can now sign in.");
         redirect("login.php");
     } catch (Throwable $error) {
-        if (database()->inTransaction()) {
-            database()->rollBack();
-        }
         $errorMessage = user_facing_error_message($error);
     }
 }

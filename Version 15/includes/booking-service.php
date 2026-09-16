@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/booking-service.php
+ * FILE PURPOSE: Core booking, availability, pricing, draft, promo, and booking-data service.
+ * USED BY: Booking pages, fleet availability, customer booking lists, and admin booking/promo pages.
+ * RESPONSIBILITY: Owns booking queries and core booking rules so booking pages can call reusable functions instead of running SQL directly.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Core booking service: queries, validation, pricing, creation, and saved drafts.
  */
@@ -1101,4 +1110,173 @@ function convert_booking_draft(int $draftId, int $userId): array
         }
         throw $error;
     }
+}
+
+/****************************************************************************
+ * ADMIN BOOKING LISTS AND PROMOTIONS
+ ****************************************************************************/
+
+/** Return bookings for the administration queue, optionally filtered by status. */
+function admin_bookings(string $status = "all"): array
+{
+    $sql =
+        "SELECT b.*, v.name AS vehicle_name, u.name AS customer_name, u.email AS customer_email
+         FROM bookings b
+         JOIN vehicles v ON v.id=b.vehicle_id
+         JOIN users u ON u.id=b.user_id";
+    $parameters = [];
+    if ($status !== "all") {
+        $sql .= " WHERE b.status = ?";
+        $parameters[] = $status;
+    }
+    $sql .= " ORDER BY b.created_at DESC";
+    $statement = database()->prepare($sql);
+    $statement->execute($parameters);
+    return $statement->fetchAll();
+}
+
+/** Return one promotion by id for the administration editor. */
+function promo_find_by_id(int $promoId): ?array
+{
+    $statement = database()->prepare(
+        "SELECT * FROM promos WHERE id = :id LIMIT 1",
+    );
+    $statement->execute(["id" => $promoId]);
+    $promotion = $statement->fetch();
+    return $promotion ?: null;
+}
+
+/** Return all promotions for administration. */
+function promo_all(): array
+{
+    return database()
+        ->query("SELECT * FROM promos ORDER BY created_at DESC")
+        ->fetchAll();
+}
+
+/** Delete an unused promotion. */
+function delete_promo(int $promoId): string
+{
+    $promotion = promo_find_by_id($promoId);
+    if (!$promotion) {
+        throw new RuntimeException("Promotion not found.");
+    }
+    if ((int) $promotion["used_count"] > 0) {
+        throw new RuntimeException(
+            "A promotion that has already been used cannot be deleted. Deactivate it instead.",
+        );
+    }
+
+    $delete = database()->prepare("DELETE FROM promos WHERE id = :id");
+    $delete->execute(["id" => $promoId]);
+    if ($delete->rowCount() !== 1) {
+        throw new RuntimeException("The promotion could not be deleted.");
+    }
+    write_audit("promotion_deleted", "promo", $promoId, [
+        "code" => $promotion["code"],
+    ]);
+    return (string) $promotion["code"];
+}
+
+/** Validate and save a promotion, returning the stored id. */
+function save_promo(array $input, int $promoId = 0): int
+{
+    $code = strtoupper(
+        preg_replace("/[^A-Z0-9_-]/i", "", trim((string) ($input["code"] ?? ""))),
+    );
+    $description = trim((string) ($input["description"] ?? ""));
+    $discountType = trim((string) ($input["discount_type"] ?? ""));
+    $discountValue = filter_var(
+        $input["discount_value"] ?? null,
+        FILTER_VALIDATE_INT,
+        ["options" => ["min_range" => 1, "max_range" => 100000]],
+    );
+    $maxUsesInput = trim((string) ($input["max_uses"] ?? ""));
+    $maxUses =
+        $maxUsesInput === ""
+            ? null
+            : filter_var($maxUsesInput, FILTER_VALIDATE_INT, [
+                "options" => ["min_range" => 1, "max_range" => 1000000],
+            ]);
+    $startsAt = trim((string) ($input["starts_at"] ?? ""));
+    $endsAt = trim((string) ($input["ends_at"] ?? ""));
+    $isActive = !empty($input["is_active"]) ? 1 : 0;
+
+    if ($code === "" || strlen($code) > 40) {
+        throw new InvalidArgumentException(
+            "Enter a promotion code using letters, numbers, underscores, or hyphens.",
+        );
+    }
+    if (mb_strlen($description) < 3 || mb_strlen($description) > 255) {
+        throw new InvalidArgumentException(
+            "Enter a description between 3 and 255 characters.",
+        );
+    }
+    if (!in_array($discountType, ["percent", "fixed"], true)) {
+        throw new InvalidArgumentException("Choose a valid discount type.");
+    }
+    if ($discountValue === false || ($discountType === "percent" && $discountValue > 100)) {
+        throw new InvalidArgumentException("Enter a valid discount value.");
+    }
+    if ($maxUsesInput !== "" && $maxUses === false) {
+        throw new InvalidArgumentException(
+            "Maximum uses must be a positive whole number or blank.",
+        );
+    }
+    foreach ([$startsAt, $endsAt] as $dateValue) {
+        if ($dateValue !== "" && !valid_date($dateValue)) {
+            throw new InvalidArgumentException("Use valid promotion dates.");
+        }
+    }
+    if ($startsAt !== "" && $endsAt !== "" && $endsAt < $startsAt) {
+        throw new InvalidArgumentException("End date must be after the start date.");
+    }
+
+    $now = date("Y-m-d H:i:s");
+    $parameters = [
+        "code" => $code,
+        "description" => $description,
+        "discount_type" => $discountType,
+        "discount_value" => $discountValue,
+        "starts_at" => $startsAt !== "" ? $startsAt . " 00:00:00" : null,
+        "ends_at" => $endsAt !== "" ? $endsAt . " 23:59:59" : null,
+        "max_uses" => $maxUses,
+        "is_active" => $isActive,
+        "updated_at" => $now,
+    ];
+
+    if ($promoId > 0) {
+        if (!promo_find_by_id($promoId)) {
+            throw new RuntimeException("Promotion not found.");
+        }
+        $parameters["id"] = $promoId;
+        $save = database()->prepare(
+            'UPDATE promos
+             SET code = :code, description = :description,
+                 discount_type = :discount_type, discount_value = :discount_value,
+                 starts_at = :starts_at, ends_at = :ends_at,
+                 max_uses = :max_uses, is_active = :is_active, updated_at = :updated_at
+             WHERE id = :id',
+        );
+    } else {
+        $parameters["created_at"] = $now;
+        $save = database()->prepare(
+            'INSERT INTO promos
+                (code, description, discount_type, discount_value, starts_at, ends_at,
+                 max_uses, used_count, is_active, created_at, updated_at)
+             VALUES
+                (:code, :description, :discount_type, :discount_value, :starts_at, :ends_at,
+                 :max_uses, 0, :is_active, :created_at, :updated_at)',
+        );
+    }
+
+    $save->execute($parameters);
+    if ($promoId < 1) {
+        $promoId = (int) database()->lastInsertId();
+    }
+    write_audit("promotion_saved", "promo", $promoId, [
+        "code" => $code,
+        "active" => (bool) $isActive,
+    ]);
+    return $promoId;
 }

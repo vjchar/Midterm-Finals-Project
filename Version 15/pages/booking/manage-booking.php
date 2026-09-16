@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/booking/manage-booking.php
+ * FILE PURPOSE: Customer booking-management hub for allowed post-booking actions.
+ * USED BY: Customers progressing through booking, payment, rental, or post-trip workflows.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $user = require_customer();
 $errorMessage = "";
@@ -62,7 +71,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     <h2>Protected account access</h2>
                     <p>Only the customer who created a booking can open its reservation details here.</p>
                     <ul>
-                        <li>Server-checked ownership</li>
+                        <li>Secure booking access</li>
                         <li>Secure account-protected changes</li>
                         <li>Date-conflict validation</li>
                         <li>Recorded account actions</li>

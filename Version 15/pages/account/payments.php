@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/account/payments.php
+ * FILE PURPOSE: Customer payment history and payment-status page.
+ * USED BY: Authenticated customers using their account area.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $authenticatedUser = require_customer();
@@ -154,7 +163,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
         <p>
             Send payment using the configured GCash number or bank account,
             then submit your transaction reference and proof for administrator
-            verification. This school build does not charge cards online.
+            verification. Card payments are not processed online.
         </p>
     </div>
 </section>

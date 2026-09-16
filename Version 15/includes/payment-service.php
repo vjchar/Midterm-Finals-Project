@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/payment-service.php
+ * FILE PURPOSE: Payment, payment-proof, verification, refund, and payment-detail service.
+ * USED BY: Customer payment pages, invoices, admin payment verification, and secure payment-proof access.
+ * RESPONSIBILITY: Owns payment records, GCash/bank method details, proof handling, verification, summaries, refunds, and payment-related persistence.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * Payments, payment verification, payment-account instructions, and refunds.
  */
@@ -860,4 +869,41 @@ function payment_method_label(string $method): string
         "cash" => "Cash at Branch",
         default => humanize_label($method),
     };
+}
+
+/****************************************************************************
+ * ADMIN PAYMENT LISTS AND SECURE PROOF LOOKUP
+ ****************************************************************************/
+
+/** Return payments for the administration page, optionally filtered by status. */
+function admin_payments(string $status = "all"): array
+{
+    $sql =
+        "SELECT p.*, b.reference AS booking_reference, u.name AS customer_name,
+                u.email AS customer_email, v.name AS vehicle_name
+         FROM payments p
+         JOIN bookings b ON b.id = p.booking_id
+         JOIN users u ON u.id = p.user_id
+         JOIN vehicles v ON v.id = b.vehicle_id";
+    $parameters = [];
+    if ($status !== "all") {
+        $sql .= " WHERE p.status = ?";
+        $parameters[] = $status;
+    }
+    $sql .=
+        " ORDER BY CASE p.status WHEN 'pending' THEN 0 ELSE 1 END, p.created_at DESC";
+    $statement = database()->prepare($sql);
+    $statement->execute($parameters);
+    return $statement->fetchAll();
+}
+
+/** Return ownership and filename information for a stored payment proof. */
+function payment_proof_record(int $paymentId): ?array
+{
+    $statement = database()->prepare(
+        "SELECT user_id, proof_filename AS filename FROM payments WHERE id = ? LIMIT 1",
+    );
+    $statement->execute([$paymentId]);
+    $record = $statement->fetch();
+    return $record ?: null;
 }

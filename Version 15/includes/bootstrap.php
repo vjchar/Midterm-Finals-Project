@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/bootstrap.php
+ * FILE PURPOSE: Central application bootstrap and startup file.
+ * USED BY: Most PHP pages, actions, and application entry points.
+ * RESPONSIBILITY: Initializes configuration, sessions, security headers, error handling, database access, helpers, authentication, and domain services exactly once.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 if (defined("BOOTSTRAPPED")) {
     return;
 }
@@ -190,3 +199,5 @@ require_once __DIR__ . "/booking-management-service.php";
 require_once __DIR__ . "/rental-service.php";
 require_once __DIR__ . "/payment-service.php";
 require_once __DIR__ . "/booking-journey-service.php";
+require_once __DIR__ . "/admin-service.php";
+require_once __DIR__ . "/components.php";

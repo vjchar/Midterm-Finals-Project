@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-promos.php
+ * FILE PURPOSE: Administrator promotion/promo-code management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 require_admin();
@@ -10,7 +19,6 @@ $errors = [];
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
         require_csrf();
-
         $action = post_string("action", "save");
         $promoId =
             filter_var($_POST["promo_id"] ?? null, FILTER_VALIDATE_INT, [
@@ -24,176 +32,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     "Choose a valid promotion to delete.",
                 );
             }
-
-            $find = database()->prepare(
-                "SELECT id, code, used_count FROM promos WHERE id = :id LIMIT 1",
-            );
-            $find->execute(["id" => $promoId]);
-            $promotion = $find->fetch();
-
-            if (!$promotion) {
-                throw new RuntimeException("Promotion not found.");
-            }
-            if ((int) $promotion["used_count"] > 0) {
-                throw new RuntimeException(
-                    "A promotion that has already been used cannot be deleted. Deactivate it instead.",
-                );
-            }
-
-            $delete = database()->prepare("DELETE FROM promos WHERE id = :id");
-            $delete->execute(["id" => $promoId]);
-            if ($delete->rowCount() !== 1) {
-                throw new RuntimeException(
-                    "The promotion could not be deleted.",
-                );
-            }
-
-            write_audit("promotion_deleted", "promo", $promoId, [
-                "code" => $promotion["code"],
-            ]);
-            flash(
-                "success",
-                "Promotion " . $promotion["code"] . " was deleted.",
-            );
+            $code = delete_promo($promoId);
+            flash("success", "Promotion " . $code . " was deleted.");
             redirect("admin-promos.php");
         }
 
         if ($action !== "save") {
-            throw new InvalidArgumentException(
-                "Choose a valid promotion action.",
-            );
+            throw new InvalidArgumentException("Choose a valid promotion action.");
         }
 
-        $code = strtoupper(preg_replace("/[^A-Z0-9_-]/i", "", post_string("code")));
-        $description = post_string("description");
-        $discountType = post_string("discount_type");
-        $discountValue = filter_var(
-            $_POST["discount_value"] ?? null,
-            FILTER_VALIDATE_INT,
-            ["options" => ["min_range" => 1, "max_range" => 100000]],
-        );
-        $maxUsesInput = post_string("max_uses");
-        $maxUses =
-            $maxUsesInput === ""
-                ? null
-                : filter_var($maxUsesInput, FILTER_VALIDATE_INT, [
-                    "options" => ["min_range" => 1, "max_range" => 1000000],
-                ]);
-        $startsAt = post_string("starts_at");
-        $endsAt = post_string("ends_at");
-        $isActive = isset($_POST["is_active"]) ? 1 : 0;
-
-        if ($code === "" || strlen($code) > 40) {
-            throw new InvalidArgumentException(
-                "Enter a promotion code using letters, numbers, underscores, or hyphens.",
-            );
-        }
-        if (mb_strlen($description) < 3 || mb_strlen($description) > 255) {
-            throw new InvalidArgumentException(
-                "Enter a description between 3 and 255 characters.",
-            );
-        }
-        if (!in_array($discountType, ["percent", "fixed"], true)) {
-            throw new InvalidArgumentException("Choose a valid discount type.");
-        }
-        if (
-            $discountValue === false ||
-            ($discountType === "percent" && $discountValue > 100)
-        ) {
-            throw new InvalidArgumentException("Enter a valid discount value.");
-        }
-        if ($maxUsesInput !== "" && $maxUses === false) {
-            throw new InvalidArgumentException(
-                "Maximum uses must be a positive whole number or blank.",
-            );
-        }
-
-        foreach ([$startsAt, $endsAt] as $dateValue) {
-            if ($dateValue !== "" && !valid_date($dateValue)) {
-                throw new InvalidArgumentException(
-                    "Use valid promotion dates.",
-                );
-            }
-        }
-        if ($startsAt !== "" && $endsAt !== "" && $endsAt < $startsAt) {
-            throw new InvalidArgumentException(
-                "End date must be after the start date.",
-            );
-        }
-
-        $currentTimestamp = date("Y-m-d H:i:s");
-        $startsAt = $startsAt !== "" ? $startsAt . " 00:00:00" : null;
-        $endsAt = $endsAt !== "" ? $endsAt . " 23:59:59" : null;
-
-        $parameters = [
-            "code" => $code,
-            "description" => $description,
-            "discount_type" => $discountType,
-            "discount_value" => $discountValue,
-            "starts_at" => $startsAt,
-            "ends_at" => $endsAt,
-            "max_uses" => $maxUses,
-            "is_active" => $isActive,
-            "updated_at" => $currentTimestamp,
-        ];
-
-        if ($promoId > 0) {
-            $exists = database()->prepare(
-                "SELECT COUNT(*) FROM promos WHERE id = :id",
-            );
-            $exists->execute(["id" => $promoId]);
-            if ((int) $exists->fetchColumn() !== 1) {
-                throw new RuntimeException("Promotion not found.");
-            }
-
-            $parameters["id"] = $promoId;
-            $save = database()->prepare(
-                'UPDATE promos
-                 SET code = :code, description = :description,
-                     discount_type = :discount_type, discount_value = :discount_value,
-                     starts_at = :starts_at, ends_at = :ends_at,
-                     max_uses = :max_uses, is_active = :is_active, updated_at = :updated_at
-                 WHERE id = :id',
-            );
-        } else {
-            $parameters["created_at"] = $currentTimestamp;
-            $save = database()->prepare(
-                'INSERT INTO promos
-                    (code, description, discount_type, discount_value, starts_at, ends_at,
-                     max_uses, used_count, is_active, created_at, updated_at)
-                 VALUES
-                    (:code, :description, :discount_type, :discount_value, :starts_at, :ends_at,
-                     :max_uses, 0, :is_active, :created_at, :updated_at)',
-            );
-        }
-
-        $save->execute($parameters);
-        if ($promoId < 1) {
-            $promoId = (int) database()->lastInsertId();
-        }
-
-        write_audit("promotion_saved", "promo", $promoId, [
-            "code" => $code,
-            "active" => (bool) $isActive,
-        ]);
+        save_promo($_POST, $promoId);
         flash("success", "Promotion saved.");
         redirect("admin-promos.php");
     } catch (Throwable $error) {
-        $message = strtolower(user_facing_error_message($error));
         if ($error instanceof PDOException) {
-            error_log("Promotion database error: " . user_facing_error_message($error));
-            $errors[] = str_contains($message, "duplicate")
-                ? "That promotion code is already in use."
-                : "The promotion could not be saved. Please try again.";
-        } elseif (
-            $error instanceof InvalidArgumentException ||
-            $error instanceof RuntimeException
-        ) {
-            $errors[] = user_facing_error_message($error);
+            error_log("Promotion database error: " . $error->getMessage());
+            $errors[] = "The promotion could not be saved. The code may already be in use.";
         } else {
-            error_log("Promotion error: " . user_facing_error_message($error));
-            $errors[] =
-                "The promotion request could not be completed. Please try again.";
+            $errors[] = user_facing_error_message($error);
         }
     }
 }
@@ -203,19 +59,8 @@ $editId =
         "options" => ["min_range" => 1],
     ]) ?:
     0;
-$edit = null;
-
-if ($editId > 0) {
-    $statement = database()->prepare(
-        "SELECT * FROM promos WHERE id = :id LIMIT 1",
-    );
-    $statement->execute(["id" => $editId]);
-    $edit = $statement->fetch() ?: null;
-}
-
-$promos = database()
-    ->query("SELECT * FROM promos ORDER BY created_at DESC")
-    ->fetchAll();
+$edit = $editId > 0 ? promo_find_by_id($editId) : null;
+$promos = promo_all();
 $value = static fn(string $key, mixed $default = ""): string => escape_html(
     $_POST[$key] ?? ($edit[$key] ?? $default),
 );

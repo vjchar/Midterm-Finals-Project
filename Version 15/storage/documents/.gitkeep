@@ -1,1 +1,4 @@
+# FILE: storage/documents/.gitkeep
+# PURPOSE: Directory placeholder tracked by Git.
+# USAGE: Keeps the empty storage/documents directory present in the repository until runtime files are created there.
 

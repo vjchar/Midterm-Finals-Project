@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/system/setup.php
+ * FILE PURPOSE: Controlled system setup/bootstrap page for first-time/local configuration tasks.
+ * USED BY: Authorized local setup/maintenance workflow.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 if (admin_exists()) {
     redirect(admin() ? "admin.php" : "login.php");
@@ -19,33 +28,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         attempt_login(post_string("email"), post_string("password"));
         flash(
             "success",
-            "Administrator created. Review the production settings before launch.",
+            "Administrator account created.",
         );
         redirect("admin.php");
     } catch (Throwable $error) {
         $errors[] = user_facing_error_message($error);
     }
 }
-$pageTitle = "First-time Setup | VJ Car Rental";
-$pageDescription = "Securely create the first VJ Car Rental administrator.";
+$pageTitle = "Create Administrator | VJ Car Rental";
+$pageDescription = "Create the administrator account for VJ Car Rental.";
 require dirname(__DIR__, 2) . "/includes/header.php";
 ?>
 <section class="auth-section pattern-layer">
     <div class="container">
         <div class="auth-shell auth-shell--wide">
             <div class="auth-intro">
-                <span class="section-kicker">Secure first-time setup</span>
-                <h1>Create the administrator</h1>
-                <p>This screen locks automatically after the first active administrator is created.</p>
-                <ul>
-                    <li>Use the direct MySQL configuration</li>
-                    <li>Use a unique <?= PASSWORD_MIN_LENGTH ?>+ character password</li>
-                    <li>Keep the database and storage folders private</li>
-                </ul>
+                <span class="section-kicker">Administrator setup</span>
+                <h1>Create Administrator Account</h1>
+                <p>Create the administrator account used to manage VJ Car Rental.</p>
             </div>
             <form class="form auth-form" method="post">
                 <?= csrf_field() ?>
-                <h2>Administrator details</h2>
+                <h2>Account details</h2>
                 <?php foreach ($errors as $error): ?>
                     <div class="alert alert-danger"><?= escape_html($error) ?></div>
                 <?php endforeach; ?>

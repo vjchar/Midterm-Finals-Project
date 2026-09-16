@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: includes/admin-vehicle-service.php
+ * FILE PURPOSE: Administrator vehicle management service.
+ * USED BY: Admin vehicle-management pages.
+ * RESPONSIBILITY: Handles admin-side vehicle create/update/archive/upload operations and related validation while keeping page templates focused on presentation.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 /**
  * An expected, user-correctable problem with the administrator vehicle form.
  */

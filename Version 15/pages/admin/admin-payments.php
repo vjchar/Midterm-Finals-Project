@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-payments.php
+ * FILE PURPOSE: Administrator payment review, verification, and refund-management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 $admin = require_admin();
 $errors = [];
@@ -66,23 +75,7 @@ if (
 ) {
     $status = "all";
 }
-$sql =
-    "SELECT p.*, b.reference AS booking_reference, u.name AS customer_name,
-            u.email AS customer_email, v.name AS vehicle_name
-     FROM payments p
-     JOIN bookings b ON b.id = p.booking_id
-     JOIN users u ON u.id = p.user_id
-     JOIN vehicles v ON v.id = b.vehicle_id";
-$params = [];
-if ($status !== "all") {
-    $sql .= " WHERE p.status = ?";
-    $params[] = $status;
-}
-$sql .=
-    ' ORDER BY CASE p.status WHEN \'pending\' THEN 0 ELSE 1 END, p.created_at DESC';
-$statement = database()->prepare($sql);
-$statement->execute($params);
-$payments = $statement->fetchAll();
+$payments = admin_payments($status);
 $refundStatus = trim((string) ($_GET["refund_status"] ?? "all"));
 if (!in_array($refundStatus, array_merge(["all"], refund_statuses()), true)) {
     $refundStatus = "all";

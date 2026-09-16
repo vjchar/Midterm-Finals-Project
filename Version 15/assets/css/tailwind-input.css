@@ -1,3 +1,10 @@
+/*
+ * FILE: assets/css/tailwind-input.css
+ * PURPOSE: Tailwind source/input stylesheet retained by the project.
+ * USAGE: Defines Tailwind directives/source input if the generated Tailwind utilities ever need to be rebuilt; the running XAMPP site should not require a Node build step.
+ * Maintenance: keep selectors in this file aligned with its styling responsibility.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

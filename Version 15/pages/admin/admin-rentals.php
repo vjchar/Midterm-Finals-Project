@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+
+/**
+ * FILE: pages/admin/admin-rentals.php
+ * FILE PURPOSE: Administrator rental lifecycle and active-rental management page.
+ * USED BY: Authenticated administrators using the corresponding management section.
+ * RESPONSIBILITY: Loads the required application/services, handles only page-level request orchestration, and renders the user interface; reusable business/database logic belongs in services.
+ *
+ * Maintenance note: Keep this file focused on the responsibility described above.
+ */
 require dirname(__DIR__, 2) . "/includes/bootstrap.php";
 
 $admin = require_admin();
@@ -87,40 +96,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $selected) {
     }
 }
 
-$rentalQuery = <<<'SQL'
-SELECT
-    b.reference,
-    b.status,
-    b.pickup_at,
-    b.return_at,
-    v.name AS vehicle_name,
-    v.availability_status,
-    u.name AS customer_name
-FROM bookings AS b
-JOIN vehicles AS v ON v.id = b.vehicle_id
-JOIN users AS u ON u.id = b.user_id
-WHERE b.status IN ('ready', 'active', 'returned')
-ORDER BY
-    CASE b.status
-        WHEN 'active' THEN 0
-        WHEN 'ready' THEN 1
-        ELSE 2
-    END,
-    b.pickup_at
-SQL;
-
-$rentals = database()->query($rentalQuery)->fetchAll();
-$adjustmentStatement = database()->query(
-    "SELECT r.*, b.reference, b.return_at AS current_return_at, b.status AS booking_status,
-            v.name AS vehicle_name, u.name AS customer_name
-     FROM rental_adjustment_requests r
-     JOIN bookings b ON b.id = r.booking_id
-     JOIN vehicles v ON v.id = b.vehicle_id
-     JOIN users u ON u.id = r.user_id
-     WHERE r.status IN ('pending','approved')
-     ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END, r.created_at"
-);
-$adjustmentRequests = $adjustmentStatement->fetchAll();
+$rentals = admin_rentals();
+$adjustmentRequests = admin_rental_adjustments();
 
 if ($selected) {
     $selected = booking_find_by_reference($selected["reference"]);
