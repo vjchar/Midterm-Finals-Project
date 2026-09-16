@@ -602,11 +602,20 @@ function extension_pricing(array $booking, string $requestedReturnAt): array
         throw new RuntimeException('This vehicle is no longer eligible for an extension.');
     }
     $subtotal = (int) $vehicle['price'] * $days;
-    $addonStatement = database()->prepare('SELECT * FROM booking_addons WHERE booking_id = ?');
+    $addonStatement = database()->prepare(
+        "SELECT ba.*, a.addon_key
+         FROM booking_addons ba
+         LEFT JOIN addons a ON a.id = ba.addon_id
+         WHERE ba.booking_id = ?"
+    );
     $addonStatement->execute([(int) $booking['id']]);
     $addonsTotal = 0;
     foreach ($addonStatement->fetchAll() as $addon) {
-        $quantity = $addon['billing'] === 'day' ? $days : 1;
+        $quantity =
+            ($addon['addon_key'] ?? '') === 'child-seat' &&
+            $addon['billing'] === 'rental'
+                ? max(1, min(4, (int) $addon['quantity']))
+                : 1;
         $addonsTotal += (int) $addon['unit_price'] * $quantity;
     }
     $promotion = null;
@@ -822,12 +831,24 @@ function activate_extension_request(int $adjustmentId, int $adminId): void
             throw new RuntimeException('Verify the full extension payment before activating the new return schedule.');
         }
         $days = $pricing['days'];
-        $addonStatement = $databaseConnection->prepare('SELECT * FROM booking_addons WHERE booking_id=?');
+        $addonStatement = $databaseConnection->prepare(
+            "SELECT ba.*, a.addon_key
+             FROM booking_addons ba
+             LEFT JOIN addons a ON a.id = ba.addon_id
+             WHERE ba.booking_id=?"
+        );
         $addonStatement->execute([(int)$adjustment['booking_id']]);
         foreach ($addonStatement->fetchAll() as $addon) {
-            $quantity = $addon['billing'] === 'day' ? $days : 1;
-            $databaseConnection->prepare('UPDATE booking_addons SET quantity=?, line_total=? WHERE id=?')
-                ->execute([$quantity,(int)$addon['unit_price']*$quantity,(int)$addon['id']]);
+            $quantity =
+                ($addon['addon_key'] ?? '') === 'child-seat' &&
+                $addon['billing'] === 'rental'
+                    ? max(1, min(4, (int)$addon['quantity']))
+                    : 1;
+            $databaseConnection->prepare(
+                "UPDATE booking_addons
+                 SET billing='rental', quantity=?, line_total=?
+                 WHERE id=?"
+            )->execute([$quantity,(int)$addon['unit_price']*$quantity,(int)$addon['id']]);
         }
         $now = date('Y-m-d H:i:s');
         $databaseConnection->prepare('UPDATE bookings SET original_return_at=COALESCE(original_return_at,return_at), return_at=?, subtotal=?, addons_total=?, discount=?, total=?, updated_at=? WHERE id=?')

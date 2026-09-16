@@ -52,6 +52,15 @@ $selectedLocation = (string) ($_POST["location"] ?? ($draftFormValues["location"
 $selectedAddOnKeys = is_array($_POST["addons"] ?? null)
     ? array_values(array_map("strval", $_POST["addons"]))
     : array_values(array_map("strval", $draftFormValues["addons"] ?? []));
+$selectedAddOnQuantities = is_array($_POST["addon_quantities"] ?? null)
+    ? $_POST["addon_quantities"]
+    : (is_array($draftFormValues["addon_quantities"] ?? null)
+        ? $draftFormValues["addon_quantities"]
+        : []);
+$childSeatQuantity = max(
+    1,
+    min(4, (int) ($selectedAddOnQuantities["child-seat"] ?? 1)),
+);
 $deliveryAddressValue = (string) ($_POST["delivery_address"] ?? ($draftFormValues["delivery_address"] ?? ""));
 $promoCodeValue = (string) ($_POST["promo"] ?? ($draftFormValues["promo"] ?? ""));
 $specialRequestsValue = (string) ($_POST["special_requests"] ?? ($draftFormValues["special_requests"] ?? ""));
@@ -499,11 +508,29 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                                         $rentalAddOn["name"],
                                     ) ?></strong>
                                     <small>
-                                        <?= money(
-                                            (int) $rentalAddOn["price"],
-                                        ) ?> /
-                                        <?= escape_html($rentalAddOn["billing"]) ?>
+                                        <?php if ($rentalAddOn["key"] === "child-seat"): ?>
+                                            <?= money((int) $rentalAddOn["price"]) ?> per seat · one-time
+                                        <?php else: ?>
+                                            <?= money((int) $rentalAddOn["price"]) ?> · one-time
+                                        <?php endif; ?>
                                     </small>
+                                    <?php if ($rentalAddOn["key"] === "child-seat"): ?>
+                                        <select
+                                            class="form-select form-select-sm addon-quantity-select"
+                                            id="childSeatQuantity"
+                                            name="addon_quantities[child-seat]"
+                                            aria-label="Number of child safety seats"
+                                            <?= in_array("child-seat", $selectedAddOnKeys, true)
+                                                ? ""
+                                                : "disabled" ?>
+                                        >
+                                            <?php for ($seatQuantity = 1; $seatQuantity <= 4; $seatQuantity++): ?>
+                                                <option value="<?= $seatQuantity ?>" <?= $childSeatQuantity === $seatQuantity ? "selected" : "" ?>>
+                                                    <?= $seatQuantity ?> <?= $seatQuantity === 1 ? "seat" : "seats" ?>
+                                                </option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    <?php endif; ?>
                                 </span>
                             </label>
                         <?php endforeach; ?>
@@ -601,10 +628,6 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                             </button>
                         </div>
                     </div>
-                    <small class="display-note">
-                        <i class="bi bi-shield-lock"></i>
-                        PHP recalculates all prices and checks reservation conflicts before saving.
-                    </small>
                 </form>
             </div>
 

@@ -80,7 +80,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                                     <small><?= escape_html($addon["key"]) ?></small>
                                 </td>
                                 <td><?= money($addon["price"]) ?></td>
-                                <td>Per <?= escape_html($addon["billing"]) ?></td>
+                                <td>One-time</td>
                                 <td>
                                     <span class="status-badge status-badge--<?= $addon[
                                         "is_active"
@@ -125,16 +125,8 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                     </div>
                     <div class="col-6">
                         <label class="form-label" for="addonBilling">Billing</label>
-                        <select class="form-select" id="addonBilling" name="billing">
-                            <option value="day" <?= $value("billing", "day") ===
-                            "day"
-                                ? "selected"
-                                : "" ?>>Per day</option>
-                            <option value="rental" <?= $value("billing") ===
-                            "rental"
-                                ? "selected"
-                                : "" ?>>Per rental</option>
-                        </select>
+                        <input type="hidden" name="billing" value="rental">
+                        <input class="form-control" id="addonBilling" value="One-time per booking" readonly>
                     </div>
                 </div>
                 <label class="form-label mt-3" for="addonIcon">Bootstrap icon class</label>

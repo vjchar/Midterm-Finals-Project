@@ -92,7 +92,7 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                         <tr>
                             <td><?= escape_html(
                                 $addon["addon_name"],
-                            ) ?> × <?= (int) $addon["quantity"] ?></td>
+                            ) ?><?= (int) $addon["quantity"] > 1 ? " × " . (int) $addon["quantity"] : "" ?></td>
                             <td><?= money((int) $addon["line_total"]) ?></td>
                         </tr>
                     <?php endforeach; ?>

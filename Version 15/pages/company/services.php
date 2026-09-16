@@ -109,11 +109,11 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                         <i class="bi <?= htmlspecialchars($addon["icon"]) ?>">
                         </i>
                         <h3><?= htmlspecialchars($addon["name"]) ?></h3>
-                        <p>₱<?= number_format(
-                            $addon["price"],
-                        ) ?> per <?= htmlspecialchars(
-     $addon["billing"],
- ) ?>, calculated in your booking total.</p>
+                        <p>
+                            ₱<?= number_format($addon["price"]) ?><?= $addon["key"] === "child-seat"
+                                ? " per seat, charged once per booking."
+                                : ", charged once per booking." ?>
+                        </p>
                         <a href="booking.php">Add to a booking <i class="bi bi-arrow-right"></i>
                         </a>
                     </article>

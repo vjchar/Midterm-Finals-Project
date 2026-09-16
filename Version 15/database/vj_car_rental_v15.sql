@@ -43,7 +43,7 @@ CREATE TABLE `addons` (
   `addon_key` varchar(80) NOT NULL,
   `name` varchar(140) NOT NULL,
   `price` int(11) NOT NULL,
-  `billing` varchar(20) NOT NULL DEFAULT 'day',
+  `billing` varchar(20) NOT NULL DEFAULT 'rental',
   `icon` varchar(80) NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL,
@@ -893,7 +893,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `addons` WRITE;
 /*!40000 ALTER TABLE `addons` DISABLE KEYS */;
-INSERT INTO `addons` VALUES (1,'child-seat','Child safety seat',250,'day','bi-person-hearts',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(2,'additional-driver','Additional driver',350,'day','bi-person-plus',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(3,'gps','GPS navigation unit',150,'day','bi-map',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(4,'wifi','Mobile Wi-Fi',250,'day','bi-wifi',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(5,'enhanced-protection','Enhanced protection',800,'day','bi-shield-plus',1,'2026-09-01 11:31:54','2026-09-01 11:31:54');
+INSERT INTO `addons` VALUES (1,'child-seat','Child safety seat',250,'rental','bi-person-hearts',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(2,'additional-driver','Additional driver',350,'rental','bi-person-plus',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(3,'gps','GPS navigation unit',150,'rental','bi-map',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(4,'wifi','Mobile Wi-Fi',250,'rental','bi-wifi',1,'2026-09-01 11:31:54','2026-09-01 11:31:54'),(5,'enhanced-protection','Enhanced protection',800,'rental','bi-shield-plus',1,'2026-09-01 11:31:54','2026-09-01 11:31:54');
 /*!40000 ALTER TABLE `addons` ENABLE KEYS */;
 UNLOCK TABLES;
 

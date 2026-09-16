@@ -3000,6 +3000,12 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
 .addon-option > span {
   gap: 4px;
 }
+.addon-option .addon-quantity-select {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
 .promo-box {
   margin-top: 18px;
   padding: 18px;
@@ -3775,9 +3781,9 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
 }
 .auth-form,
 .booking-management-panel {
-  padding: clamp(24px, 4vw, 42px);
+  padding: clamp(20px, 4vw, 42px);
   border: 1px solid rgba(15, 45, 92, 0.12);
-  border-radius: 20px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--shadow-soft);
 }
@@ -4068,19 +4074,21 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
   border-collapse: collapse;
 }
 .admin-table th {
-  padding: 13px 15px;
+  padding: 13px 14px;
   color: var(--navy);
   background: rgba(47, 142, 208, 0.08);
   font-size: 0.72rem;
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  vertical-align: middle;
 }
 .admin-table td {
-  padding: 15px;
+  padding: 14px 12px;
   border-top: 1px solid rgba(15, 45, 92, 0.09);
   vertical-align: middle;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 .admin-table td strong,
 .admin-table td small {
@@ -4098,11 +4106,21 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
 }
 .admin-inline-form {
   display: flex;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
+  min-width: 240px;
 }
 .admin-inline-form .form-select {
-  min-width: 105px;
+  min-width: 130px;
+  max-width: 200px;
+}
+.admin-inline-form .form-control {
+  min-width: 170px;
+  max-width: 220px;
+}
+.admin-inline-form .btn {
+  flex-shrink: 0;
 }
 .admin-row-actions {
   display: flex;
@@ -4130,6 +4148,82 @@ main > section:nth-of-type(even):not(.home-hero):not(.page-hero) {
   border-radius: 17px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow-soft);
+}
+.refund-management-panel,
+.refund-history-panel {
+  padding: clamp(20px, 2.5vw, 28px);
+}
+.refund-management-table {
+  min-width: 1040px;
+  table-layout: fixed;
+}
+.refund-management-table thead th {
+  padding: 12px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.refund-management-table tbody td {
+  padding: 14px 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  vertical-align: top;
+}
+.refund-management-table tbody td > strong,
+.refund-management-table tbody td > a strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.refund-management-table tbody td small,
+.refund-management-table .refund-create-details small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.refund-management-table .refund-create-details {
+  margin-top: 8px;
+}
+.refund-management-table .refund-create-details summary {
+  margin-bottom: 6px;
+  color: var(--navy);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.refund-management-table .status-badge {
+  min-width: 112px;
+  min-height: 32px;
+  padding: 7px 12px;
+  font-size: 0.72rem;
+}
+.refund-management-table .admin-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+.refund-management-table .admin-inline-form .form-select,
+.refund-management-table .admin-inline-form .form-control {
+  flex: 1 1 140px;
+  min-width: 0;
+  max-width: none;
+}
+.refund-management-table .admin-inline-form .btn {
+  align-self: flex-start;
+}
+.refund-history-table {
+  min-width: 680px;
+}
+.refund-amount-column {
+  min-width: 180px;
+  white-space: nowrap;
+}
+.refund-amount-column small {
+  white-space: normal;
+}
+
+.refund-management-table td:last-child {
+  min-width: 320px;
+  vertical-align: top;
 }
 .admin-split .admin-editor {
   position: sticky;

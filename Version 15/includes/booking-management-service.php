@@ -123,6 +123,17 @@ function booking_modification_maintenance_conflict(int $vehicleId, string $picku
 /** @return array<string,mixed> */
 function booking_modification_input_from_booking(array $booking): array
 {
+    $addonRows = booking_modification_addon_rows((int) $booking['id']);
+    $addonQuantities = [];
+    foreach ($addonRows as $addonRow) {
+        if (($addonRow['addon_key'] ?? '') === 'child-seat') {
+            $addonQuantities['child-seat'] =
+                ($addonRow['billing'] ?? '') === 'rental'
+                    ? max(1, min(4, (int) ($addonRow['quantity'] ?? 1)))
+                    : 1;
+        }
+    }
+
     return [
         'vehicle' => (string) $booking['vehicle_id'],
         'pickup' => date('Y-m-d', strtotime((string) $booking['pickup_at'])),
@@ -132,7 +143,8 @@ function booking_modification_input_from_booking(array $booking): array
         'pickup_method' => (string) $booking['pickup_method'],
         'location' => (string) $booking['pickup_location'],
         'delivery_address' => (string) $booking['delivery_address'],
-        'addons' => array_values(array_map(static fn(array $addon): string => (string) ($addon['addon_key'] ?? ''), booking_modification_addon_rows((int) $booking['id']))),
+        'addons' => array_values(array_map(static fn(array $addon): string => (string) ($addon['addon_key'] ?? ''), $addonRows)),
+        'addon_quantities' => $addonQuantities,
         'promo' => (string) ($booking['promo_code'] ?? ''),
         'special_requests' => (string) ($booking['special_requests'] ?? ''),
     ];
@@ -152,6 +164,17 @@ function booking_modification_addon_rows(int $bookingId): array
 /** @return array<string,mixed> */
 function booking_modification_original_payload(array $booking): array
 {
+    $addonRows = booking_modification_addon_rows((int) $booking['id']);
+    $addonQuantities = [];
+    foreach ($addonRows as $addonRow) {
+        if (($addonRow['addon_key'] ?? '') === 'child-seat') {
+            $addonQuantities['child-seat'] =
+                ($addonRow['billing'] ?? '') === 'rental'
+                    ? max(1, min(4, (int) ($addonRow['quantity'] ?? 1)))
+                    : 1;
+        }
+    }
+
     return [
         'vehicle' => (string) $booking['vehicle_id'],
         'vehicle_id' => (int) $booking['vehicle_id'],
@@ -165,7 +188,8 @@ function booking_modification_original_payload(array $booking): array
         'pickup_method' => (string) $booking['pickup_method'],
         'location' => (string) $booking['pickup_location'],
         'delivery_address' => (string) $booking['delivery_address'],
-        'addons' => array_values(array_filter(array_map(static fn(array $addon): string => (string) ($addon['addon_key'] ?? ''), booking_modification_addon_rows((int) $booking['id'])))),
+        'addons' => array_values(array_filter(array_map(static fn(array $addon): string => (string) ($addon['addon_key'] ?? ''), $addonRows))),
+        'addon_quantities' => $addonQuantities,
         'promo' => (string) ($booking['promo_code'] ?? ''),
         'special_requests' => (string) ($booking['special_requests'] ?? ''),
         'subtotal' => (int) $booking['subtotal'],
@@ -219,6 +243,16 @@ function normalized_modification_payload(array $details): array
         'location' => (string) $details['pickup_location'],
         'delivery_address' => (string) $details['delivery_address'],
         'addons' => array_values(array_map(static fn(array $addon): string => (string) $addon['key'], $details['addons'])),
+        'addon_quantities' => array_reduce(
+            $details['addons'],
+            static function (array $quantities, array $addon): array {
+                if (($addon['key'] ?? '') === 'child-seat') {
+                    $quantities['child-seat'] = (int) ($addon['quantity'] ?? 1);
+                }
+                return $quantities;
+            },
+            [],
+        ),
         'promo' => (string) $details['promo_code'],
         'special_requests' => (string) $details['special_requests'],
         'subtotal' => (int) $details['subtotal'],

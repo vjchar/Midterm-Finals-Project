@@ -33,6 +33,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const addOnOptions = bookingForm.querySelectorAll(
         'input[name="addons[]"]',
     );
+    const childSeatOption = bookingForm.querySelector(
+        'input[name="addons[]"][value="child-seat"]',
+    );
+    const childSeatQuantity = document.getElementById("childSeatQuantity");
 
     const previewElements = {
         image: document.getElementById("bookingVehiclePreviewImage"),
@@ -302,8 +306,23 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     addOnOptions.forEach(function (inputElement) {
-        inputElement.addEventListener("change", scheduleAutomaticEstimate);
+        inputElement.addEventListener("change", function () {
+            if (inputElement === childSeatOption && childSeatQuantity) {
+                childSeatQuantity.disabled = !childSeatOption.checked;
+            }
+            scheduleAutomaticEstimate();
+        });
     });
+
+    if (childSeatQuantity) {
+        childSeatQuantity.addEventListener("click", function (event) {
+            event.stopPropagation();
+        });
+        childSeatQuantity.addEventListener(
+            "change",
+            scheduleAutomaticEstimate,
+        );
+    }
 
     if (deliveryAddress) {
         deliveryAddress.addEventListener("change", scheduleAutomaticEstimate);

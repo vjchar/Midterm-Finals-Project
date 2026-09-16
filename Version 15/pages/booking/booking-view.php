@@ -304,10 +304,10 @@ require dirname(__DIR__, 2) . "/includes/header.php";
                     </article>
                 <?php endif; ?>
                 <?php if ($refunds || $booking["status"] === "cancelled"): ?>
-                    <article class="booking-management-panel" id="refunds">
+                    <article class="booking-management-panel refund-history-panel" id="refunds">
                         <span class="section-kicker">Refunds & financial adjustments</span>
                         <h2>Refund transaction history</h2>
-                        <?php if (!$refunds): ?><p class="display-note">No refund transaction is recorded for this booking.</p><?php else: ?><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Processed</th><th>Reference</th></tr></thead><tbody><?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td><?= money((int) $refund["amount"]) ?></td><td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span></td><td><?= $refund["processed_at"] ? date("M j, Y g:i A", strtotime($refund["processed_at"])) : "—" ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+                        <?php if (!$refunds): ?><p class="display-note">No refund transaction is recorded for this booking.</p><?php else: ?><div class="admin-table-wrap"><table class="admin-table refund-history-table"><thead><tr><th>Type</th><th class="refund-amount-column">Amount</th><th>Status</th><th>Processed</th><th>Reference</th></tr></thead><tbody><?php foreach ($refunds as $refund): ?><tr><td><?= escape_html(refund_type_label((string) $refund["refund_type"])) ?><small><?= escape_html((string) $refund["reason"]) ?></small></td><td class="refund-amount-column"><?= money((int) $refund["amount"]) ?></td><td class="status-cell"><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span></td><td><?= $refund["processed_at"] ? date("M j, Y g:i A", strtotime($refund["processed_at"])) : "—" ?></td><td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
                     </article>
                 <?php endif; ?>
             </div>

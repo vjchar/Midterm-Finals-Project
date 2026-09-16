@@ -58,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'location' => post_string('location'),
             'delivery_address' => post_string('delivery_address'),
             'addons' => is_array($_POST['addons'] ?? null) ? $_POST['addons'] : [],
+            'addon_quantities' => is_array($_POST['addon_quantities'] ?? null)
+                ? $_POST['addon_quantities']
+                : [],
             'promo' => post_string('promo'),
             'special_requests' => post_string('special_requests'),
         ];
@@ -146,7 +149,31 @@ require dirname(__DIR__, 2) . '/includes/header.php';
                         <div class="col-12">
                             <label class="form-label">Add-ons</label>
                             <div class="modification-addon-grid">
-                            <?php foreach ($addons as $addon): ?><label class="draft-addon-option"><input type="checkbox" name="addons[]" value="<?= escape_html($addon['key']) ?>" <?= in_array($addon['key'], $formInput['addons'] ?? [], true) ? 'checked' : '' ?>><span><strong><?= escape_html($addon['name']) ?></strong><small><?= money((int) $addon['price']) ?> / <?= escape_html($addon['billing']) ?></small></span></label><?php endforeach; ?>
+                            <?php foreach ($addons as $addon): ?>
+                                <?php
+                                $isSelectedAddon = in_array($addon['key'], $formInput['addons'] ?? [], true);
+                                $selectedChildSeatQuantity = max(
+                                    1,
+                                    min(4, (int) (($formInput['addon_quantities']['child-seat'] ?? 1))),
+                                );
+                                ?>
+                                <label class="draft-addon-option">
+                                    <input type="checkbox" name="addons[]" value="<?= escape_html($addon['key']) ?>" <?= $isSelectedAddon ? 'checked' : '' ?>>
+                                    <span>
+                                        <strong><?= escape_html($addon['name']) ?></strong>
+                                        <small><?= money((int) $addon['price']) ?><?= $addon['key'] === 'child-seat' ? ' per seat · one-time' : ' · one-time' ?></small>
+                                        <?php if ($addon['key'] === 'child-seat'): ?>
+                                            <select class="form-select form-select-sm mt-2" name="addon_quantities[child-seat]" aria-label="Number of child safety seats">
+                                                <?php for ($seatQuantity = 1; $seatQuantity <= 4; $seatQuantity++): ?>
+                                                    <option value="<?= $seatQuantity ?>" <?= $selectedChildSeatQuantity === $seatQuantity ? 'selected' : '' ?>>
+                                                        <?= $seatQuantity ?> <?= $seatQuantity === 1 ? 'seat' : 'seats' ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
                             </div>
                         </div>
                         <div class="col-md-6"><label class="form-label" for="modifyPromo">Promo code</label><input class="form-control" id="modifyPromo" name="promo" value="<?= escape_html((string) $formInput['promo']) ?>" maxlength="40"></div>

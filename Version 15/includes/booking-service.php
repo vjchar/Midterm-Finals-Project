@@ -38,6 +38,7 @@ function booking_locations(): array
  *     location?: mixed,
  *     delivery_address?: mixed,
  *     addons?: mixed,
+ *     addon_quantities?: mixed,
  *     promo?: mixed,
  *     special_requests?: mixed
  * } $bookingInput
@@ -165,10 +166,33 @@ function parse_booking_input(array $bookingInput): array
             "One or more selected add-ons are unavailable.",
         );
     }
+
+    $rawAddOnQuantities = is_array($bookingInput["addon_quantities"] ?? null)
+        ? $bookingInput["addon_quantities"]
+        : [];
+
     $rentalSubtotal = (int) $selectedVehicle["price"] * $rentalDays;
     $addOnTotal = 0;
     foreach ($selectedRentalAddOns as &$rentalAddOn) {
-        $addOnQuantity = $rentalAddOn["billing"] === "day" ? $rentalDays : 1;
+        $addOnQuantity = 1;
+
+        if ($rentalAddOn["key"] === "child-seat") {
+            $validatedQuantity = filter_var(
+                $rawAddOnQuantities["child-seat"] ?? 1,
+                FILTER_VALIDATE_INT,
+                ["options" => ["min_range" => 1, "max_range" => 4]],
+            );
+            if ($validatedQuantity === false) {
+                throw new InvalidArgumentException(
+                    "Choose between 1 and 4 child safety seats.",
+                );
+            }
+            $addOnQuantity = (int) $validatedQuantity;
+        }
+
+        // Add-ons are charged once per booking. Only child seats use a
+        // customer-selected quantity.
+        $rentalAddOn["billing"] = "rental";
         $rentalAddOn["quantity"] = $addOnQuantity;
         $rentalAddOn["line_total"] =
             (int) $rentalAddOn["price"] * $addOnQuantity;
@@ -511,16 +535,24 @@ function reschedule_booking(
         }
         $rentalSubtotal = (int) $selectedVehicle["price"] * $rentalDays;
         $bookingAddOnsStatement = $databaseConnection->prepare(
-            "SELECT * FROM booking_addons WHERE booking_id = ?",
+            "SELECT ba.*, a.addon_key
+             FROM booking_addons ba
+             LEFT JOIN addons a ON a.id = ba.addon_id
+             WHERE ba.booking_id = ?",
         );
         $bookingAddOnsStatement->execute([$booking["id"]]);
         $addOnTotal = 0;
         foreach ($bookingAddOnsStatement->fetchAll() as $rentalAddOn) {
             $addOnQuantity =
-                $rentalAddOn["billing"] === "day" ? $rentalDays : 1;
+                ($rentalAddOn["addon_key"] ?? "") === "child-seat" &&
+                $rentalAddOn["billing"] === "rental"
+                    ? max(1, min(4, (int) $rentalAddOn["quantity"]))
+                    : 1;
             $addOnLineTotal = (int) $rentalAddOn["unit_price"] * $addOnQuantity;
             $addOnUpdateStatement = $databaseConnection->prepare(
-                "UPDATE booking_addons SET quantity = ?, line_total = ? WHERE id = ?",
+                "UPDATE booking_addons
+                 SET billing = 'rental', quantity = ?, line_total = ?
+                 WHERE id = ?",
             );
             $addOnUpdateStatement->execute([
                 $addOnQuantity,
@@ -795,9 +827,17 @@ function booking_draft_raw_input(array $draft, ?string $promoOverride = null): a
     $pickup = new DateTimeImmutable((string) $draft['pickup_at']);
     $return = new DateTimeImmutable((string) $draft['return_at']);
     $addonKeys = [];
+    $addonQuantities = [];
     foreach ($draft['addons'] ?? [] as $addon) {
         if (!empty($addon['addon_key'])) {
-            $addonKeys[] = (string) $addon['addon_key'];
+            $addonKey = (string) $addon['addon_key'];
+            $addonKeys[] = $addonKey;
+            if ($addonKey === 'child-seat') {
+                $addonQuantities['child-seat'] =
+                    ($addon['billing'] ?? '') === 'rental'
+                        ? max(1, min(4, (int) ($addon['quantity'] ?? 1)))
+                        : 1;
+            }
         }
     }
 
@@ -811,6 +851,7 @@ function booking_draft_raw_input(array $draft, ?string $promoOverride = null): a
         'location' => (string) $draft['pickup_location'],
         'delivery_address' => (string) ($draft['delivery_address'] ?? ''),
         'addons' => $addonKeys,
+        'addon_quantities' => $addonQuantities,
         'promo' => $promoOverride ?? (string) ($draft['promo_code'] ?? ''),
         'special_requests' => (string) ($draft['special_requests'] ?? ''),
     ];

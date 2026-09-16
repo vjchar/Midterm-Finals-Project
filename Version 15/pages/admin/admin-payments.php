@@ -238,7 +238,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
         </div>
     </div>
     <div class="container">
-        <article class="admin-editor mt-5" id="refund-history">
+        <article class="admin-editor refund-management-panel mt-5" id="refund-history">
             <div class="admin-editor__heading">
                 <div><span class="section-kicker">Unified financial controls</span><h2>Refund Management</h2><p>Cancellation, payment-correction, security-deposit, and modification refunds share one traceable workflow tied to verified payments.</p></div>
             </div>
@@ -257,7 +257,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                 <input class="form-control" id="refundQuery" name="refund_q" value="<?= escape_html($refundQuery) ?>" placeholder="Booking, customer, vehicle, refund reference">
                 <button class="btn btn-outline" type="submit">Filter Refunds</button>
             </form>
-            <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Booking</th><th>Customer</th><th>Refund type</th><th>Amount / source</th><th>Status</th><th>Reference</th><th>Action</th></tr></thead><tbody>
+            <div class="admin-table-wrap"><table class="admin-table refund-management-table"><thead><tr><th>Booking</th><th>Customer</th><th>Refund type</th><th class="refund-amount-column">Amount / source</th><th>Status</th><th>Reference</th><th>Action</th></tr></thead><tbody>
             <?php foreach ($refunds as $refund): ?>
                 <tr>
                     <td><a href="admin-bookings.php?reference=<?= urlencode($refund["booking_reference"]) ?>"><strong><?= escape_html($refund["booking_reference"]) ?></strong></a><small><?= escape_html($refund["vehicle_name"]) ?></small></td>
@@ -274,7 +274,7 @@ require dirname(__DIR__, 2) . "/includes/admin-nav.php";
                             <?php if ($refundAudit): ?><small>History:</small><?php foreach ($refundAudit as $auditItem): ?><small><?= date("M j, Y g:i A", strtotime($auditItem["created_at"])) ?> · <?= escape_html(ucwords(str_replace("_", " ", (string) $auditItem["action"]))) ?><?= $auditItem["actor_name"] ? " · " . escape_html($auditItem["actor_name"]) : "" ?></small><?php endforeach; ?><?php endif; ?>
                         </details>
                     </td>
-                    <td><strong><?= money((int) $refund["amount"]) ?></strong><small>From <?= escape_html(ucwords(str_replace("_", " ", $refund["payment_type"]))) ?> payment of <?= money((int) $refund["payment_amount"]) ?></small><small>Remaining refundable on payment: <?= money(refundable_balance_for_payment((int) $refund["payment_id"])) ?></small></td>
+                    <td class="refund-amount-column"><strong><?= money((int) $refund["amount"]) ?></strong><small>From <?= escape_html(ucwords(str_replace("_", " ", $refund["payment_type"]))) ?> payment of <?= money((int) $refund["payment_amount"]) ?></small><small>Remaining refundable on payment: <?= money(refundable_balance_for_payment((int) $refund["payment_id"])) ?></small></td>
                     <td><span class="status-badge status-badge--<?= status_class($refund["status"]) ?>"><?= escape_html(humanize_label($refund["status"])) ?></span><?php if ($refund["processed_at"]): ?><small><?= date("M j, Y g:i A", strtotime($refund["processed_at"])) ?></small><?php endif; ?></td>
                     <td><?= escape_html((string) ($refund["reference_number"] ?: "—")) ?></td>
                     <td>

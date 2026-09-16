@@ -249,6 +249,7 @@ function addon_all(bool $activeOnly = true): array
     return array_map(static function (array $addonRow): array {
         $addonRow["id"] = (int) $addonRow["id"];
         $addonRow["price"] = (int) $addonRow["price"];
+        $addonRow["billing"] = "rental";
         $addonRow["is_active"] = (bool) $addonRow["is_active"];
 
         return $addonRow;
@@ -531,15 +532,15 @@ function save_addon(array $input): int
     );
     $name = mb_substr(trim((string) ($input["name"] ?? "")), 0, 140);
     $price = filter_var($input["price"] ?? null, FILTER_VALIDATE_INT);
-    $billing = trim((string) ($input["billing"] ?? ""));
+    $billing = "rental";
     $icon = preg_replace("/[^a-z0-9-]/i", "", trim((string) ($input["icon"] ?? "")));
     $active = !empty($input["is_active"]) ? 1 : 0;
 
     if ($key === "" || $name === "" || strlen($key) > 80) {
         throw new InvalidArgumentException("Enter a key and display name.");
     }
-    if ($price === false || $price < 0 || !in_array($billing, ["day", "rental"], true)) {
-        throw new InvalidArgumentException("Enter valid pricing and billing.");
+    if ($price === false || $price < 0) {
+        throw new InvalidArgumentException("Enter a valid add-on price.");
     }
     if ($icon === "" || strlen($icon) > 80) {
         $icon = "bi-plus-circle";
@@ -575,6 +576,9 @@ function addon_find(int $id): ?array
     $statement = database()->prepare("SELECT * FROM addons WHERE id=? LIMIT 1");
     $statement->execute([$id]);
     $addon = $statement->fetch();
+    if ($addon) {
+        $addon["billing"] = "rental";
+    }
     return $addon ?: null;
 }
 

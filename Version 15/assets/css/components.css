@@ -2466,21 +2466,48 @@ body[data-page="admin.php"] .dashboard-panel__header p {
 }
 
 .dashboard-table-wrap {
+  overflow-x: auto;
   border-radius: 14px;
   box-shadow: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-recent-bookings {
+  min-width: 0;
 }
 
 .dashboard-booking-table {
-  min-width: 690px;
+  width: 100%;
+  min-width: 980px;
+  table-layout: fixed;
+}
+
+.dashboard-booking-table th,
+.dashboard-booking-table td {
+  padding: 12px 10px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.4;
+  font-size: 0.78rem;
 }
 
 .dashboard-booking-table th {
   white-space: nowrap;
 }
 
+.dashboard-booking-table td {
+  white-space: normal;
+}
+
 .dashboard-booking-reference {
+  display: inline-block;
+  max-width: 100%;
   color: var(--navy);
   font-weight: 800;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .dashboard-booking-reference:hover {
@@ -2814,7 +2841,7 @@ body[data-page="admin.php"] .dashboard-empty p {
   }
 
   .dashboard-table-wrap {
-    overflow: visible;
+    overflow-x: auto;
     border: 0;
     background: transparent;
   }
