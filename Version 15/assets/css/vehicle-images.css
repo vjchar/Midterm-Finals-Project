@@ -51,8 +51,13 @@
 
 .vehicle-image-wrap img,
 .vehicle-card--compact .vehicle-image-wrap img {
+  width: 350%;
+  height: 350%;
+  max-width: none;
+  max-height: none;
   transition: transform 180ms ease;
 }
+
 
 img[src$="vehicle-placeholder.svg"],
 img.is-placeholder {

@@ -46,8 +46,8 @@ const CANCELLATION_REFUND_CUTOFF_HOURS = 24;
 
 // Manual payment account details. Replace these placeholders with the actual
 // VJ Car Rental payment details before deployment.
-const PAYMENT_GCASH_NAME = "VJ Car Rental";
-const PAYMENT_GCASH_NUMBER = "09XX XXX XXXX";
-const PAYMENT_BANK_NAME = "YOUR BANK";
-const PAYMENT_BANK_ACCOUNT_NAME = "VJ Car Rental";
-const PAYMENT_BANK_ACCOUNT_NUMBER = "XXXX XXXX XXXX";
+const PAYMENT_GCASH_NAME = "VJ Charles Bernardino";
+const PAYMENT_GCASH_NUMBER = "0994 894 5174";
+const PAYMENT_BANK_NAME = "Vj Charles O. Bernardino";
+const PAYMENT_BANK_ACCOUNT_NAME = "VJ Charles Bernardino";
+const PAYMENT_BANK_ACCOUNT_NUMBER = "4415 5698 6254";
